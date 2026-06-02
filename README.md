@@ -1,105 +1,224 @@
-# Smart Workspace
+<div align="center">
 
-Smart Workspace là backend cho website thương mại điện tử bán sản phẩm setup phòng làm việc thông minh. Dự án phục vụ lab môn Thương mại điện tử, tập trung vào luồng nghiệp vụ dễ demo bằng Swagger hoặc Postman, code rõ ràng và không làm kiến trúc quá phức tạp.
+# 🧠 Smart Workspace
 
-## Ý tưởng dự án
+### Website thương mại điện tử cho thương hiệu **Phòng Làm Việc Thông Minh**
 
-Smart Workspace mô phỏng mô hình D2C E-commerce / Dropshipping - Brand Hybrid. Thay vì chỉ bán từng sản phẩm lẻ, website tập trung vào các giải pháp setup góc làm việc trọn gói cho sinh viên, lập trình viên, freelancer, content creator và nhân viên văn phòng hybrid/remote.
+**Setup thông minh · Không gian gọn gàng · Làm việc hiệu quả**
 
-Nhóm sản phẩm chính:
+<p>
+  <img src="https://img.shields.io/badge/Project-E--commerce-blue?style=for-the-badge" alt="E-commerce Project">
+  <img src="https://img.shields.io/badge/UI-Responsive-green?style=for-the-badge" alt="Responsive UI">
+  <img src="https://img.shields.io/badge/Admin-Dashboard-orange?style=for-the-badge" alt="Admin Dashboard">
+  <img src="https://img.shields.io/badge/Database-ERD-purple?style=for-the-badge" alt="Database ERD">
+</p>
 
-- Bàn nâng hạ thông minh
-- Ghế công thái học
-- Giá đỡ laptop
-- Đèn màn hình chống lóa
-- Phụ kiện setup bàn làm việc
-- Combo setup như Creator Setup, Coder Setup, Hybrid Worker Setup
+</div>
 
-## Phạm vi chức năng
+---
 
-Backend được thiết kế để hỗ trợ các nhóm chức năng chính:
+## 📌 Giới thiệu dự án
 
-- Auth: đăng ký, đăng nhập, lấy thông tin user hiện tại, phân quyền CUSTOMER/ADMIN
-- Product catalog: danh mục, sản phẩm, ảnh sản phẩm, tìm kiếm, lọc, sắp xếp, phân trang
-- Cart: giỏ hàng active theo user, thêm/sửa/xóa item, tính tổng tiền
-- Order: tạo đơn hàng từ giỏ hàng, lưu snapshot sản phẩm, quản lý trạng thái đơn
-- Payment mock: COD, chuyển khoản ngân hàng, MoMo, ZaloPay, VNPay, thẻ
-- Shipment mock: lưu thông tin giao hàng và trạng thái vận chuyển
-- Review/comment: đánh giá và bình luận sản phẩm
-- Feedback/contact: khách gửi liên hệ, admin xử lý phản hồi
-- Policy: chính sách đổi trả, bảo hành, vận chuyển, thanh toán
-- Store location: địa điểm cửa hàng/showroom kèm Google Maps URL
-- Admin: quản lý sản phẩm, danh mục, đơn hàng, thanh toán, vận chuyển, user và dashboard cơ bản
+**Smart Workspace** là một website thương mại điện tử chuyên cung cấp các sản phẩm và combo setup cho góc học tập, làm việc và sáng tạo nội dung. Dự án tập trung vào nhóm sản phẩm như **bàn nâng hạ**, **ghế công thái học**, **đèn màn hình**, **giá đỡ laptop**, **phụ kiện quản lý cáp**, **kệ lưu trữ** và các **combo phòng làm việc thông minh**.
 
-Trong bản lab, thanh toán và vận chuyển chỉ là mock. Dự án không tích hợp thanh toán thật, realtime tracking, microservices, Kafka, Redis, Kubernetes hay CI/CD nâng cao.
+Điểm khác biệt của Smart Workspace không chỉ nằm ở việc bán từng sản phẩm riêng lẻ, mà là cung cấp một **giải pháp không gian làm việc trọn gói**: đẹp, gọn, tiện dụng, công thái học và phù hợp với nhu cầu của người dùng trẻ hiện nay.
 
-## Tech stack
+Dự án được xây dựng phục vụ môn **Thương mại điện tử**, mô phỏng đầy đủ một hệ thống bán hàng online từ phía khách hàng đến phía quản trị viên.
 
-- Java 21
-- Spring Boot 3.3.5
-- Spring Web
-- Spring Data JPA / Hibernate
-- Spring Validation
-- Spring Security + JWT theo scope dự án
-- Flyway Migration
-- MySQL
-- Maven Wrapper
-- Lombok
-- Swagger/OpenAPI với springdoc-openapi
+---
 
-## Kiến trúc
+## 🎯 Mục tiêu dự án
 
-Dự án dùng layered monolith đơn giản:
+- Xây dựng một website thương mại điện tử hoàn chỉnh, có giao diện thân thiện và dễ sử dụng.
+- Giúp khách hàng tìm kiếm, xem, so sánh, thêm sản phẩm vào giỏ hàng và đặt mua sản phẩm.
+- Cho phép khách hàng gửi đánh giá, bình luận, feedback và xem các chính sách bán hàng.
+- Cung cấp trang quản trị để admin quản lý sản phẩm, danh mục, đơn hàng, khách hàng, khuyến mại và nội dung website.
+- Thiết kế hệ thống có thể mở rộng thêm các tính năng như gợi ý combo setup, thanh toán online, thống kê doanh thu và chăm sóc khách hàng.
 
-```txt
-Controller -> Service -> Repository -> Database
+---
+
+## 💡 Ý tưởng kinh doanh
+
+Smart Workspace hướng đến mô hình **D2C - Direct to Consumer**, bán trực tiếp đến người tiêu dùng thông qua website riêng. Thương hiệu định vị ở phân khúc **Affordable Premium**, tức là sản phẩm có chất lượng, thẩm mỹ và trải nghiệm tốt nhưng vẫn dễ tiếp cận hơn so với các thương hiệu cao cấp.
+
+Khách hàng mục tiêu gồm:
+
+- Sinh viên cần góc học tập gọn gàng, đẹp và tiện dụng.
+- Lập trình viên, IT, nhân viên văn phòng thường ngồi làm việc lâu.
+- Freelancer, content creator cần không gian làm việc có tính thẩm mỹ.
+- Người làm việc hybrid/remote muốn nâng cấp góc làm việc tại nhà.
+
+---
+
+## ✨ Chức năng nổi bật
+
+### 🛍️ Dành cho khách hàng
+
+- Xem trang chủ với banner, sản phẩm nổi bật, combo setup và khuyến mại.
+- Xem danh mục sản phẩm theo nhóm: bàn, ghế, đèn, phụ kiện, combo setup.
+- Tìm kiếm sản phẩm theo tên hoặc từ khóa.
+- Lọc sản phẩm theo danh mục, giá, nhu cầu sử dụng hoặc phong cách setup.
+- Sắp xếp sản phẩm theo giá, sản phẩm mới, sản phẩm bán chạy hoặc đánh giá cao.
+- Xem chi tiết sản phẩm gồm hình ảnh, mô tả, giá cũ, giá mới, khuyến mại và chính sách.
+- Thêm sản phẩm vào giỏ hàng, cập nhật số lượng hoặc xóa sản phẩm khỏi giỏ.
+- Đặt hàng, nhập thông tin nhận hàng và chọn phương thức thanh toán.
+- Theo dõi trạng thái đơn hàng.
+- Đánh giá, bình luận sản phẩm sau khi mua.
+- Gửi feedback hoặc liên hệ với cửa hàng.
+- Xem chính sách đổi trả, bảo hành, vận chuyển và thanh toán.
+- Xem vị trí cửa hàng qua Google Maps.
+- Giao diện responsive trên máy tính, tablet và điện thoại.
+
+### 🧑‍💼 Dành cho quản trị viên
+
+- Đăng nhập vào trang quản trị.
+- Quản lý dashboard tổng quan: doanh thu, đơn hàng, khách hàng, sản phẩm bán chạy.
+- Quản lý danh mục sản phẩm cha/con.
+- Quản lý sản phẩm: thêm, sửa, xóa, ẩn/hiện sản phẩm.
+- Quản lý hình ảnh sản phẩm.
+- Quản lý đơn hàng và cập nhật trạng thái xử lý.
+- Quản lý khách hàng và tài khoản người dùng.
+- Quản lý đánh giá, bình luận và feedback.
+- Quản lý mã giảm giá, banner và chương trình khuyến mại.
+- Quản lý chính sách đổi trả, bảo hành, vận chuyển.
+- Quản lý thông tin liên hệ và địa chỉ cửa hàng.
+
+---
+
+## 🧭 Các trang chính của website
+
+### Giao diện khách hàng
+
+| Trang | Mô tả |
+|---|---|
+| Trang chủ | Hiển thị banner, sản phẩm nổi bật, combo setup, khuyến mại và lời giới thiệu thương hiệu. |
+| Danh mục sản phẩm | Cho phép khách hàng xem, lọc, tìm kiếm và sắp xếp sản phẩm. |
+| Chi tiết sản phẩm | Hiển thị hình ảnh, thông tin, giá, đánh giá, bình luận và chính sách liên quan. |
+| Giỏ hàng | Hiển thị sản phẩm đã chọn, số lượng, tổng tiền và thao tác cập nhật giỏ hàng. |
+| Thanh toán | Nhập thông tin giao hàng, chọn phương thức thanh toán và xác nhận đơn hàng. |
+| Đơn hàng của tôi | Theo dõi lịch sử mua hàng và trạng thái đơn hàng. |
+| Liên hệ | Hiển thị form liên hệ, feedback, thông tin cửa hàng và Google Maps. |
+| Chính sách | Bao gồm đổi trả, bảo hành, vận chuyển, thanh toán và bảo mật. |
+
+### Giao diện quản trị
+
+| Trang | Mô tả |
+|---|---|
+| Dashboard | Tổng quan doanh thu, đơn hàng, khách hàng và sản phẩm bán chạy. |
+| Quản lý sản phẩm | Thêm, sửa, xóa, tìm kiếm và cập nhật trạng thái sản phẩm. |
+| Quản lý danh mục | Tổ chức danh mục cha/con cho sản phẩm. |
+| Quản lý đơn hàng | Xem chi tiết đơn, cập nhật trạng thái xử lý và giao hàng. |
+| Quản lý khách hàng | Xem danh sách tài khoản, thông tin khách hàng và lịch sử mua hàng. |
+| Quản lý đánh giá | Duyệt, ẩn hoặc phản hồi đánh giá sản phẩm. |
+| Quản lý feedback | Xem và xử lý góp ý/liên hệ từ khách hàng. |
+| Quản lý khuyến mại | Tạo mã giảm giá, banner và chương trình ưu đãi. |
+| Quản lý chính sách | Cập nhật nội dung bảo hành, đổi trả và vận chuyển. |
+| Quản lý cửa hàng | Cập nhật địa chỉ, hotline, email và bản đồ Google Maps. |
+
+---
+
+## 🛒 Quy trình mua hàng
+
+```mermaid
+flowchart LR
+    A[Khách hàng truy cập website] --> B[Xem / tìm kiếm / lọc sản phẩm]
+    B --> C[Xem chi tiết sản phẩm]
+    C --> D[Thêm vào giỏ hàng]
+    D --> E[Tiến hành thanh toán]
+    E --> F[Nhập thông tin giao hàng]
+    F --> G[Chọn phương thức thanh toán]
+    G --> H[Xác nhận đơn hàng]
+    H --> I[Admin xử lý đơn]
+    I --> J[Giao hàng]
+    J --> K[Khách hàng đánh giá / feedback]
 ```
 
-Quy ước chính:
+---
 
-- Controller chỉ nhận request, gọi Service và trả response.
-- Service xử lý nghiệp vụ.
-- Repository chỉ truy vấn database.
-- Entity mapping với bảng MySQL.
-- API request/response dùng DTO, không trả Entity trực tiếp.
-- Response nên thống nhất bằng `ApiResponse` và `PageResponse`.
+## 🧩 Nhóm chức năng hệ thống
 
-Package backend hiện tại nằm dưới:
+| Nhóm chức năng | Nội dung |
+|---|---|
+| Tài khoản | Đăng ký, đăng nhập, đăng xuất, phân quyền khách hàng/admin. |
+| Sản phẩm | Quản lý sản phẩm, ảnh sản phẩm, giá, mô tả, tồn kho và trạng thái hiển thị. |
+| Danh mục | Phân loại sản phẩm theo nhóm và danh mục cha/con. |
+| Tìm kiếm & lọc | Hỗ trợ tìm kiếm, lọc và sắp xếp sản phẩm. |
+| Giỏ hàng | Thêm sản phẩm, cập nhật số lượng, xóa sản phẩm và tính tổng tiền. |
+| Đơn hàng | Tạo đơn, xem chi tiết đơn và cập nhật trạng thái đơn hàng. |
+| Thanh toán | Hỗ trợ COD, chuyển khoản hoặc mô phỏng ví điện tử/cổng thanh toán. |
+| Đánh giá | Khách hàng đánh giá sản phẩm, bình luận và phản hồi. |
+| Feedback | Gửi góp ý, liên hệ và yêu cầu hỗ trợ. |
+| Khuyến mại | Quản lý giá cũ, giá mới, mã giảm giá và chương trình ưu đãi. |
+| Chính sách | Hiển thị chính sách đổi trả, bảo hành, vận chuyển và thanh toán. |
+| Cửa hàng | Hiển thị thông tin liên hệ và vị trí cửa hàng trên Google Maps. |
+| Quản trị | Dashboard, quản lý dữ liệu và theo dõi hoạt động kinh doanh. |
 
-```txt
-backend/src/main/java/com/example/smartworkspace
+---
+
+## 🧬 Database tổng quan
+
+Các nhóm bảng chính trong hệ thống:
+
+```text
+users, roles, user_roles, addresses
+categories, products, product_images
+carts, cart_items
+orders, order_items, payments
+product_reviews, product_comments
+feedbacks, promotions, policies, store_locations
 ```
 
-## Database và Flyway
+ERD của dự án được thiết kế bằng **draw.io / diagrams.net**, thể hiện các quan hệ chính giữa người dùng, sản phẩm, giỏ hàng, đơn hàng, đánh giá, feedback và trang quản trị.
 
-Schema được quản lý bằng Flyway tại:
+---
 
-```txt
-backend/src/main/resources/db/migration
+## 🧱 Công nghệ sử dụng
+
+> Có thể điều chỉnh phần này theo đúng source code thực tế của nhóm.
+
+| Thành phần | Công nghệ / Công cụ |
+|---|---|
+| Frontend | HTML, CSS, JavaScript / React / Bootstrap / Tailwind CSS |
+| Backend | Java, Spring Boot / hoặc framework backend nhóm sử dụng |
+| Database | MySQL |
+| API | RESTful API |
+| Authentication | Session / JWT tùy triển khai |
+| Design UI | Figma, Canva, Google Stitch hoặc công cụ thiết kế giao diện |
+| ERD | draw.io, diagrams.net |
+| Báo cáo | Microsoft Word |
+| Trình chiếu | PowerPoint / Canva |
+| Quản lý source | Git, GitHub |
+
+---
+
+## 🗂️ Cấu trúc thư mục đề xuất
+
+```bash
+smart-workspace/
+├── frontend/                 # Giao diện khách hàng và quản trị
+│   ├── assets/               # Hình ảnh, icon, font, CSS, JS
+│   ├── pages/                # Các trang giao diện
+│   ├── components/           # Header, footer, product card, sidebar, modal
+│   └── README.md
+│
+├── backend/                  # API và xử lý nghiệp vụ
+│   ├── src/                  # Source code backend
+│   ├── database/             # Script SQL / migration
+│   └── README.md
+└── README.md                 # Giới thiệu tổng quan dự án
 ```
 
-Migration hiện có:
 
-- `V1__init_schema.sql`
-- `V2__seed_roles.sql`
-- `V3__seed_categories.sql`
-- `V4__seed_products.sql`
+## ⚙️ Hướng dẫn chạy dự án
 
-Hibernate chỉ validate schema, không tự tạo hoặc tự cập nhật bảng:
+### 1. Clone repository
 
-```properties
-spring.jpa.hibernate.ddl-auto=validate
+```bash
+git clone <repository-url>
+cd smart-workspace
 ```
 
-Nếu cần thay đổi schema sau khi migration đã chạy, tạo migration mới thay vì sửa file cũ.
-
-## Cấu hình local
-
-Yêu cầu:
-
-- Java 21
-- MySQL
-- Maven Wrapper có sẵn trong thư mục `backend`
+### 2. Cấu hình database
 
 Tạo database MySQL:
 
@@ -107,89 +226,113 @@ Tạo database MySQL:
 CREATE DATABASE smart_workspace CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-Biến môi trường tham khảo trong `env.example`:
+Import file SQL hoặc chạy migration theo source của nhóm.
 
-```env
-DB_URL=jdbc:mysql://localhost:3306/smart_workspace?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-DB_USERNAME=root
-DB_PASSWORD=
-JWT_SECRET=change-this-secret-to-at-least-32-characters
-JWT_EXPIRATION_MS=86400000
-```
-
-Chạy backend trên Windows PowerShell:
-
-```powershell
-cd backend
-.\mvnw.cmd spring-boot:run
-```
-
-Chạy backend trên macOS/Linux:
+### 3. Chạy backend
 
 ```bash
 cd backend
-./mvnw spring-boot:run
+# Ví dụ nếu dùng Spring Boot
+mvn spring-boot:run
 ```
 
-Sau khi chạy thành công:
+### 4. Chạy frontend
 
-- Base URL: `http://localhost:8080/api`
-- Swagger UI: `http://localhost:8080/swagger-ui.html`
-- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+```bash
+cd frontend
+# Nếu dùng HTML/CSS/JS thuần: mở file index.html
+# Nếu dùng React/Vite:
+npm install
+npm run dev
+```
 
-## API chính theo scope
+### 5. Truy cập website
 
-Public API:
+```text
+Frontend: http://localhost:5173
+Backend API: http://localhost:8080
+```
 
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `GET /api/products`
-- `GET /api/products/{id}`
-- `GET /api/products/slug/{slug}`
-- `GET /api/categories`
-- `GET /api/policies`
-- `GET /api/store-locations`
-- `POST /api/feedbacks`
+---
 
-API cần đăng nhập:
+## 🖼️ Demo giao diện
 
-- `/api/auth/me`
-- `/api/users/me/**`
-- `/api/cart/**`
-- `/api/orders/**`
-- `/api/reviews/**`
-- `/api/comments/**`
+> Thêm ảnh chụp màn hình vào thư mục `docs/screenshots/` rồi cập nhật đường dẫn bên dưới.
 
-API admin:
+| Trang chủ | Danh mục sản phẩm | Chi tiết sản phẩm |
+|---|---|---|
+| `docs/screenshots/home.png` | `docs/screenshots/products.png` | `docs/screenshots/product-detail.png` |
 
-- `/api/admin/**`
+| Giỏ hàng | Thanh toán | Admin Dashboard |
+|---|---|---|
+| `docs/screenshots/cart.png` | `docs/screenshots/checkout.png` | `docs/screenshots/admin-dashboard.png` |
 
-Role admin bắt buộc là `ADMIN`.
+---
 
-## Demo flow đề xuất
+## ✅ Checklist chức năng
 
-1. Register user
-2. Login user và lấy Bearer token
-3. Xem danh sách sản phẩm
-4. Search/filter/sort sản phẩm
-5. Thêm sản phẩm vào giỏ hàng
-6. Tạo đơn hàng từ giỏ hàng
-7. Xem lịch sử đơn hàng của user
-8. Admin đăng nhập
-9. Admin cập nhật trạng thái đơn hàng, thanh toán, vận chuyển
-10. User review/comment sản phẩm
-11. Khách gửi feedback
-12. Public xem policies và store locations
+- [ ] Trang chủ responsive.
+- [ ] Danh sách sản phẩm.
+- [ ] Tìm kiếm sản phẩm.
+- [ ] Lọc và sắp xếp sản phẩm.
+- [ ] Chi tiết sản phẩm có hình ảnh, giá cũ, giá mới, khuyến mại.
+- [ ] Đăng ký, đăng nhập, đăng xuất.
+- [ ] Giỏ hàng.
+- [ ] Thanh toán / đặt hàng.
+- [ ] Liên hệ và feedback.
+- [ ] Chính sách đổi trả, bảo hành, vận chuyển.
+- [ ] Google Maps.
+- [ ] Đánh giá sản phẩm và bình luận.
+- [ ] Trang quản trị.
+- [ ] Quản lý sản phẩm, danh mục, đơn hàng, khách hàng.
+- [ ] Giao diện hiển thị tốt trên desktop, tablet và mobile.
 
-## Tài liệu dự án
+---
 
-Các tài liệu mô tả scope, database, API contract, coding rules và checklist demo nằm trong thư mục `docs`:
+## 🚀 Định hướng phát triển
 
-- `docs/00-project-context.md`
-- `docs/01-backend-scope.md`
-- `docs/02-database-design.md`
-- `docs/03-api-contract.md`
-- `docs/04-agent-task-board.md`
-- `docs/05-coding-rules.md`
-- `docs/06-flyway-rules.md`
-- `docs/07-test-checklist.md`
+- Gợi ý combo setup theo nhu cầu: học tập, lập trình, sáng tạo nội dung, làm việc hybrid.
+- Tích hợp thanh toán điện tử như VNPay, MoMo hoặc ZaloPay.
+- Thêm thông báo đơn hàng qua email hoặc Zalo.
+- Tối ưu SEO cho trang sản phẩm và bài viết tư vấn setup.
+- Phát triển wishlist, mã giảm giá cá nhân hóa và chương trình tích điểm.
+- Bổ sung dashboard thống kê doanh thu, tỷ lệ chuyển đổi và sản phẩm bán chạy.
+- Nghiên cứu tính năng xem trước setup bằng 3D/AR trong tương lai.
+
+---
+
+## 👥 Thành viên nhóm
+
+| STT | Họ tên | MSSV | Vai trò | Mức độ tham gia |
+|---|---|---|---|---|
+| 1 | Nguyễn Văn A | 000000000 | Frontend / UI | 100% |
+| 2 | Nguyễn Văn B | 000000000 | Backend / Database | 100% |
+| 3 | Nguyễn Văn C | 000000000 | Báo cáo / Slide | 100% |
+| 4 | Nguyễn Văn D | 000000000 | Kiểm thử / Tài liệu | 100% |
+
+---
+
+## 📚 Tài liệu liên quan
+
+- Đề bài Case Study môn Thương mại điện tử.
+- Kế hoạch kinh doanh thương hiệu Smart Workspace.
+- File ERD Smart Workspace.
+- Báo cáo Word.
+- Slide thuyết trình.
+- Source code website.
+
+---
+
+## 📄 Ghi chú
+
+Dự án được thực hiện phục vụ mục đích học tập trong môn **Thương mại điện tử**. Các thông tin, chức năng và giao diện có thể được điều chỉnh theo yêu cầu giảng viên và tiến độ triển khai thực tế của nhóm.
+
+---
+
+<div align="center">
+
+### Made with 💻 by Smart Workspace Team
+
+**UTH · E-commerce Course Project**
+
+</div>
