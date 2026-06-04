@@ -223,13 +223,13 @@ Không dùng:
 
 ## Phase 11 - Policy, Store Location, Admin Dashboard
 
-- [ ] API public xem policies
-- [ ] API public xem policy theo type
-- [ ] Admin tạo/sửa policy
-- [ ] API public xem store locations
-- [ ] Admin CRUD store locations
-- [ ] Store location có Google Maps URL
-- [ ] Admin dashboard basic:
+- [x] API public xem policies
+- [x] API public xem policy theo type
+- [x] Admin tạo/sửa policy
+- [x] API public xem store locations
+- [x] Admin CRUD store locations
+- [x] Store location có Google Maps URL
+- [x] Admin dashboard basic:
   - Tổng sản phẩm
   - Tổng đơn hàng
   - Tổng doanh thu mock
