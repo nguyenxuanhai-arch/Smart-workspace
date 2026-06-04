@@ -240,19 +240,19 @@ Không dùng:
 
 ## Phase 12 - Testing & Demo
 
-- [ ] Test register
-- [ ] Test login
-- [ ] Test JWT `/auth/me`
-- [ ] Test admin authorization
-- [ ] Test product listing
-- [ ] Test search/filter/sort products
-- [ ] Test cart flow
-- [ ] Test create order
-- [ ] Test payment mock
-- [ ] Test admin update order
-- [ ] Test review/comment
-- [ ] Test feedback
-- [ ] Test policies
-- [ ] Test store locations
-- [ ] Chuẩn bị Swagger demo
-- [ ] Chuẩn bị Postman collection nếu có thời gian
+- [x] Test register
+- [x] Test login
+- [x] Test JWT `/auth/me`
+- [x] Test admin authorization
+- [x] Test product listing
+- [x] Test search/filter/sort products
+- [x] Test cart flow
+- [x] Test create order
+- [x] Test payment mock
+- [x] Test admin update order
+- [x] Test review/comment
+- [x] Test feedback
+- [x] Test policies
+- [x] Test store locations
+- [x] Chuẩn bị Swagger demo
+- [x] Chuẩn bị Postman collection nếu có thời gian

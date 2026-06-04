@@ -1,0 +1,814 @@
+{
+  "info": {
+    "name": "Smart Workspace Lab Demo",
+    "description": "Demo collection for Smart Workspace backend. Run Setup first, then Auth, Catalog, Cart/Order, Social, Content/Admin.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00 Setup",
+      "item": [
+        {
+          "name": "Setup demo variables and pick product",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const runId = Date.now().toString();",
+                  "pm.collectionVariables.set('runId', runId);",
+                  "pm.collectionVariables.set('customerEmail', `customer-${runId}@smartworkspace.local`);",
+                  "pm.collectionVariables.set('customerPhone', `09${runId.slice(-8)}`);",
+                  "pm.collectionVariables.set('customerPassword', '123456');",
+                  "pm.collectionVariables.set('adminEmail', 'admin-demo@smartworkspace.local');",
+                  "pm.collectionVariables.set('adminPassword', '123456');"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Product list is available', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const firstProduct = body.data && body.data.items && body.data.items[0];",
+                  "if (firstProduct) { pm.collectionVariables.set('productId', firstProduct.id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/products?page=0&size=1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 Auth",
+      "item": [
+        {
+          "name": "Register customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Customer Demo\",\n  \"email\": \"{{customerEmail}}\",\n  \"phone\": \"{{customerPhone}}\",\n  \"password\": \"{{customerPassword}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/register"
+          }
+        },
+        {
+          "name": "Login customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Customer login succeeds', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "if (body.data && body.data.accessToken) { pm.environment.set('customerToken', body.data.accessToken); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{customerEmail}}\",\n  \"password\": \"{{customerPassword}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "JWT me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me"
+          }
+        },
+        {
+          "name": "Register admin demo once",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Admin Demo\",\n  \"email\": \"{{adminEmail}}\",\n  \"phone\": \"0909000099\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/register"
+          }
+        },
+        {
+          "name": "Login admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.data && body.data.accessToken) { pm.environment.set('adminToken', body.data.accessToken); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "Admin authorization with customer token should be forbidden",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/dashboard"
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Product Listing",
+      "item": [
+        {
+          "name": "Product listing",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/products?page=0&size=10"
+          }
+        },
+        {
+          "name": "Product search",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/products?search=desk&page=0&size=10"
+          }
+        },
+        {
+          "name": "Product filter and sort",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/products?minPrice=100000&maxPrice=5000000&sort=price_asc&page=0&size=10"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Cart Order Payment",
+      "item": [
+        {
+          "name": "Add item to cart",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const firstItem = body.data && body.data.items && body.data.items[0];",
+                  "if (firstItem) { pm.collectionVariables.set('cartItemId', firstItem.id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": {{productId}},\n  \"quantity\": 1\n}"
+            },
+            "url": "{{baseUrl}}/api/cart/items"
+          }
+        },
+        {
+          "name": "View cart",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/cart"
+          }
+        },
+        {
+          "name": "Update cart item",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 2\n}"
+            },
+            "url": "{{baseUrl}}/api/cart/items/{{cartItemId}}"
+          }
+        },
+        {
+          "name": "Create order from cart",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.data) {",
+                  "  pm.collectionVariables.set('orderId', body.data.id);",
+                  "  if (body.data.payment) { pm.collectionVariables.set('paymentId', body.data.payment.id); }",
+                  "  if (body.data.shipment) { pm.collectionVariables.set('shipmentId', body.data.shipment.id); }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"receiverName\": \"Nguyen Van A\",\n  \"receiverPhone\": \"0909000000\",\n  \"shippingAddress\": \"123 Nguyen Trai, Quan 1, TP.HCM\",\n  \"paymentMethod\": \"COD\",\n  \"note\": \"Demo order\"\n}"
+            },
+            "url": "{{baseUrl}}/api/orders"
+          }
+        },
+        {
+          "name": "My orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/orders/my"
+          }
+        },
+        {
+          "name": "Create payment mock",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.data && body.data.id) { pm.collectionVariables.set('paymentId', body.data.id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentMethod\": \"MOMO\"\n}"
+            },
+            "url": "{{baseUrl}}/api/payments/{{orderId}}"
+          }
+        },
+        {
+          "name": "Admin update order status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CONFIRMED\"\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/orders/{{orderId}}/status"
+          }
+        },
+        {
+          "name": "Admin update payment status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentStatus\": \"PAID\"\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/payments/{{paymentId}}/status"
+          }
+        },
+        {
+          "name": "Admin update shipment status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shippingStatus\": \"SHIPPING\",\n  \"trackingCode\": \"GHN{{runId}}\",\n  \"carrierName\": \"GHN\"\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/shipments/{{shipmentId}}/status"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 Review Comment Feedback",
+      "item": [
+        {
+          "name": "Create review",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.data && body.data.id) { pm.collectionVariables.set('reviewId', body.data.id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"content\": \"Demo review: product works well.\"\n}"
+            },
+            "url": "{{baseUrl}}/api/products/{{productId}}/reviews"
+          }
+        },
+        {
+          "name": "List reviews",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/products/{{productId}}/reviews"
+          }
+        },
+        {
+          "name": "Create root comment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.data && body.data.id) { pm.collectionVariables.set('commentId', body.data.id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Demo comment: is this available?\",\n  \"parentId\": null\n}"
+            },
+            "url": "{{baseUrl}}/api/products/{{productId}}/comments"
+          }
+        },
+        {
+          "name": "Create reply comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Demo reply comment.\",\n  \"parentId\": {{commentId}}\n}"
+            },
+            "url": "{{baseUrl}}/api/products/{{productId}}/comments"
+          }
+        },
+        {
+          "name": "List comments",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/products/{{productId}}/comments"
+          }
+        },
+        {
+          "name": "Create feedback",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.data && body.data.id) { pm.collectionVariables.set('feedbackId', body.data.id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Demo Visitor\",\n  \"email\": \"visitor-{{runId}}@smartworkspace.local\",\n  \"phone\": \"0909000000\",\n  \"subject\": \"Tu van san pham\",\n  \"message\": \"Toi muon tu van combo setup cho phong nho.\"\n}"
+            },
+            "url": "{{baseUrl}}/api/feedbacks"
+          }
+        },
+        {
+          "name": "Admin update review status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"HIDDEN\"\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/reviews/{{reviewId}}/status"
+          }
+        },
+        {
+          "name": "Admin feedback list",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/feedbacks?page=0&size=10"
+          }
+        },
+        {
+          "name": "Admin update feedback status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PROCESSING\"\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/feedbacks/{{feedbackId}}/status"
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 Policy Store Location Dashboard",
+      "item": [
+        {
+          "name": "Admin create policy",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.data && body.data.id) { pm.collectionVariables.set('policyId', body.data.id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"RETURN\",\n  \"title\": \"Return Policy Demo\",\n  \"content\": \"Return within 7 days for eligible demo products.\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/policies"
+          }
+        },
+        {
+          "name": "Public policies",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/policies"
+          }
+        },
+        {
+          "name": "Public policy by type",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/policies/RETURN"
+          }
+        },
+        {
+          "name": "Admin create store location",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.data && body.data.id) { pm.collectionVariables.set('storeLocationId', body.data.id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Smart Workspace HCM {{runId}}\",\n  \"address\": \"Quan 1, TP.HCM\",\n  \"phone\": \"0909000000\",\n  \"latitude\": 10.7769,\n  \"longitude\": 106.7009,\n  \"googleMapUrl\": \"https://maps.google.com/?q=10.7769,106.7009\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/store-locations"
+          }
+        },
+        {
+          "name": "Public store locations",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/store-locations"
+          }
+        },
+        {
+          "name": "Admin update store location",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Smart Workspace HCM Updated {{runId}}\",\n  \"address\": \"Quan 1, TP.HCM\",\n  \"phone\": \"0909000001\",\n  \"latitude\": 10.7769,\n  \"longitude\": 106.7009,\n  \"googleMapUrl\": \"https://maps.google.com/?q=10.7769,106.7009\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/store-locations/{{storeLocationId}}"
+          }
+        },
+        {
+          "name": "Admin dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/dashboard"
+          }
+        },
+        {
+          "name": "Admin delete store location",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/store-locations/{{storeLocationId}}"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "runId",
+      "value": ""
+    },
+    {
+      "key": "customerEmail",
+      "value": ""
+    },
+    {
+      "key": "customerPhone",
+      "value": ""
+    },
+    {
+      "key": "customerPassword",
+      "value": "123456"
+    },
+    {
+      "key": "adminEmail",
+      "value": "admin-demo@smartworkspace.local"
+    },
+    {
+      "key": "adminPassword",
+      "value": "123456"
+    },
+    {
+      "key": "productId",
+      "value": "1"
+    },
+    {
+      "key": "cartItemId",
+      "value": ""
+    },
+    {
+      "key": "orderId",
+      "value": ""
+    },
+    {
+      "key": "paymentId",
+      "value": ""
+    },
+    {
+      "key": "shipmentId",
+      "value": ""
+    },
+    {
+      "key": "reviewId",
+      "value": ""
+    },
+    {
+      "key": "commentId",
+      "value": ""
+    },
+    {
+      "key": "feedbackId",
+      "value": ""
+    },
+    {
+      "key": "policyId",
+      "value": ""
+    },
+    {
+      "key": "storeLocationId",
+      "value": ""
+    }
+  ]
+}
