@@ -114,71 +114,71 @@ Không dùng:
 
 ## Phase 5 - Security & Auth
 
-- [ ] Tạo `SecurityConfig`
-- [ ] Tạo `JwtService`
-- [ ] Tạo `JwtAuthenticationFilter`
-- [ ] Tạo `CustomUserDetails`
-- [ ] Tạo `CustomUserDetailsService`
-- [ ] Cấu hình BCrypt password encoder
-- [ ] Cấu hình endpoint public/private/admin
-- [ ] Tạo Auth DTO
-- [ ] Tạo `AuthService`
-- [ ] Tạo `AuthController`
-- [ ] API register
-- [ ] API login
-- [ ] API me
-- [ ] Register tự gán role CUSTOMER
-- [ ] Test login lấy JWT token thành công
+- [x] Tạo `SecurityConfig`
+- [x] Tạo `JwtService`
+- [x] Tạo `JwtAuthenticationFilter`
+- [x] Tạo `CustomUserDetails`
+- [x] Tạo `CustomUserDetailsService`
+- [x] Cấu hình BCrypt password encoder
+- [x] Cấu hình endpoint public/private/admin
+- [x] Tạo Auth DTO
+- [x] Tạo `AuthService`
+- [x] Tạo `AuthController`
+- [x] API register
+- [x] API login
+- [x] API me
+- [x] Register tự gán role CUSTOMER
+- [x] Test login lấy JWT token thành công
 
 ---
 
 ## Phase 6 - User & Address
 
-- [ ] Tạo User DTO
-- [ ] Tạo Address DTO
-- [ ] API xem profile
-- [ ] API cập nhật profile
-- [ ] API xem danh sách địa chỉ
-- [ ] API thêm địa chỉ
-- [ ] API sửa địa chỉ
-- [ ] API xóa địa chỉ
-- [ ] Kiểm tra user chỉ sửa được địa chỉ của mình
+- [x] Tạo User DTO
+- [x] Tạo Address DTO
+- [x] API xem profile
+- [x] API cập nhật profile
+- [x] API xem danh sách địa chỉ
+- [x] API thêm địa chỉ
+- [x] API sửa địa chỉ
+- [x] API xóa địa chỉ
+- [x] Kiểm tra user chỉ sửa được địa chỉ của mình
 
 ---
 
 ## Phase 7 - Category & Product Catalog
 
-- [ ] Tạo Category DTO
-- [ ] Tạo Product DTO
-- [ ] Tạo ProductMapper
-- [ ] API public xem categories
-- [ ] API admin CRUD categories
-- [ ] API public xem danh sách products
-- [ ] API public xem product detail theo id
-- [ ] API public xem product detail theo slug
-- [ ] Search product theo keyword
-- [ ] Filter product theo category
-- [ ] Filter product theo giá
-- [ ] Sort product theo giá/ngày tạo
-- [ ] Pagination products
-- [ ] API admin tạo product
-- [ ] API admin sửa product
-- [ ] API admin xóa mềm product
-- [ ] Xử lý product images
+- [x] Tạo Category DTO
+- [x] Tạo Product DTO
+- [x] Tạo ProductMapper
+- [x] API public xem categories
+- [x] API admin CRUD categories
+- [x] API public xem danh sách products
+- [x] API public xem product detail theo id
+- [x] API public xem product detail theo slug
+- [x] Search product theo keyword
+- [x] Filter product theo category
+- [x] Filter product theo giá
+- [x] Sort product theo giá/ngày tạo
+- [x] Pagination products
+- [x] API admin tạo product
+- [x] API admin sửa product
+- [x] API admin xóa mềm product
+- [x] Xử lý product images
 
 ---
 
 ## Phase 8 - Cart
 
-- [ ] Tạo Cart DTO
-- [ ] API xem giỏ hàng
-- [ ] API thêm item vào giỏ
-- [ ] Nếu item đã tồn tại thì tăng số lượng
-- [ ] API cập nhật số lượng
-- [ ] API xóa item
-- [ ] Tính subtotal từng item
-- [ ] Tính total giỏ hàng
-- [ ] Chỉ user đăng nhập mới dùng được cart
+- [x] Tạo Cart DTO
+- [x] API xem giỏ hàng
+- [x] API thêm item vào giỏ
+- [x] Nếu item đã tồn tại thì tăng số lượng
+- [x] API cập nhật số lượng
+- [x] API xóa item
+- [x] Tính subtotal từng item
+- [x] Tính total giỏ hàng
+- [x] Chỉ user đăng nhập mới dùng được cart
 
 ---
 
