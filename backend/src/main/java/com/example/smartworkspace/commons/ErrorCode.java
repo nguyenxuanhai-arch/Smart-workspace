@@ -14,10 +14,15 @@ public enum ErrorCode {
 
     USER_NOT_FOUND("User not found", HttpStatus.NOT_FOUND),
     ROLE_NOT_FOUND("Role not found", HttpStatus.NOT_FOUND),
+    ADDRESS_NOT_FOUND("Address not found", HttpStatus.NOT_FOUND),
     EMAIL_ALREADY_EXISTS("Email already exists", HttpStatus.CONFLICT),
+    PHONE_ALREADY_EXISTS("Phone already exists", HttpStatus.CONFLICT),
 
     CATEGORY_NOT_FOUND("Category not found", HttpStatus.NOT_FOUND),
     PRODUCT_NOT_FOUND("Product not found", HttpStatus.NOT_FOUND),
+    CATEGORY_SLUG_ALREADY_EXISTS("Category slug already exists", HttpStatus.CONFLICT),
+    PRODUCT_SLUG_ALREADY_EXISTS("Product slug already exists", HttpStatus.CONFLICT),
+    PRODUCT_SKU_ALREADY_EXISTS("Product SKU already exists", HttpStatus.CONFLICT),
 
     CART_NOT_FOUND("Cart not found", HttpStatus.NOT_FOUND),
     CART_ITEM_NOT_FOUND("Cart item not found", HttpStatus.NOT_FOUND),
