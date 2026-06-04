@@ -66,6 +66,7 @@ public class SecurityConfig {
                                 "/api/users/me/**",
                                 "/api/cart/**",
                                 "/api/orders/**",
+                                "/api/payments/**",
                                 "/api/reviews/**",
                                 "/api/comments/**"
                         ).authenticated()

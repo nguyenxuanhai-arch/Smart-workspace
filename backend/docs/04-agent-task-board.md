@@ -184,23 +184,23 @@ Không dùng:
 
 ## Phase 9 - Order, Payment, Shipment
 
-- [ ] Tạo Order DTO
-- [ ] Tạo Payment DTO
-- [ ] Tạo Shipment DTO
-- [ ] API tạo order từ cart
-- [ ] Lưu snapshot order_items
-- [ ] Tính subtotal, shipping fee, discount, total
-- [ ] Clear cart sau khi tạo order
-- [ ] API xem order của user
-- [ ] API xem chi tiết order
-- [ ] User chỉ xem được order của mình
-- [ ] Tạo payment mock
-- [ ] Hỗ trợ COD, BANK_TRANSFER, MOMO, ZALOPAY, VNPAY, CARD
-- [ ] Tạo shipment mock
-- [ ] Admin xem danh sách order
-- [ ] Admin cập nhật order status
-- [ ] Admin cập nhật payment status
-- [ ] Admin cập nhật shipment status
+- [x] Tạo Order DTO
+- [x] Tạo Payment DTO
+- [x] Tạo Shipment DTO
+- [x] API tạo order từ cart
+- [x] Lưu snapshot order_items
+- [x] Tính subtotal, shipping fee, discount, total
+- [x] Clear cart sau khi tạo order
+- [x] API xem order của user
+- [x] API xem chi tiết order
+- [x] User chỉ xem được order của mình
+- [x] Tạo payment mock
+- [x] Hỗ trợ COD, BANK_TRANSFER, MOMO, ZALOPAY, VNPAY, CARD
+- [x] Tạo shipment mock
+- [x] Admin xem danh sách order
+- [x] Admin cập nhật order status
+- [x] Admin cập nhật payment status
+- [x] Admin cập nhật shipment status
 
 ---
 
