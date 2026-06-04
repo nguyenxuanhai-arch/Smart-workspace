@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ProductCommentRepository extends JpaRepository<ProductComment, Long> {
     List<ProductComment> findByProductIdAndStatus(Long productId, VisibilityStatus status);
+
+    List<ProductComment> findByProductIdAndStatusOrderByCreatedAtAsc(Long productId, VisibilityStatus status);
 }

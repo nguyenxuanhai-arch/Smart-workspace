@@ -206,18 +206,18 @@ Không dùng:
 
 ## Phase 10 - Review, Comment, Feedback
 
-- [ ] API xem reviews theo product
-- [ ] API tạo review
-- [ ] Validate rating 1-5
-- [ ] Chặn user review một product nhiều lần nếu áp dụng unique
-- [ ] API xem comments theo product
-- [ ] API tạo comment
-- [ ] Hỗ trợ reply comment bằng parentId
-- [ ] Admin cập nhật trạng thái review
-- [ ] Admin cập nhật trạng thái comment
-- [ ] API gửi feedback public
-- [ ] Admin xem feedback
-- [ ] Admin cập nhật trạng thái feedback
+- [x] API xem reviews theo product
+- [x] API tạo review
+- [x] Validate rating 1-5
+- [x] Chặn user review một product nhiều lần nếu áp dụng unique
+- [x] API xem comments theo product
+- [x] API tạo comment
+- [x] Hỗ trợ reply comment bằng parentId
+- [x] Admin cập nhật trạng thái review
+- [x] Admin cập nhật trạng thái comment
+- [x] API gửi feedback public
+- [x] Admin xem feedback
+- [x] Admin cập nhật trạng thái feedback
 
 ---
 
