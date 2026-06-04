@@ -1,10 +1,10 @@
 package com.example.smartworkspace.entities;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
-import com.example.smartworkspace.enums.UserStatus;
+import com.example.smartworkspace.enums.PaymentMethod;
+import com.example.smartworkspace.enums.PaymentStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -14,8 +14,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -29,27 +28,32 @@ import org.hibernate.annotations.UpdateTimestamp;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "users")
-public class User {
+@Table(name = "payments")
+public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "full_name", nullable = false, length = 150)
-    private String fullName;
-
-    @Column(nullable = false, unique = true, length = 255)
-    private String email;
-
-    @Column(unique = true, length = 30)
-    private String phone;
-
-    @Column(name = "password_hash", nullable = false, length = 255)
-    private String passwordHash;
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "order_id", nullable = false, unique = true)
+    private Order order;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
-    private UserStatus status = UserStatus.ACTIVE;
+    @Column(name = "payment_method", nullable = false, length = 50)
+    private PaymentMethod paymentMethod;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status", nullable = false, length = 50)
+    private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
+
+    @Column(nullable = false, precision = 15, scale = 2)
+    private BigDecimal amount;
+
+    @Column(name = "transaction_code", unique = true, length = 100)
+    private String transactionCode;
+
+    @Column(name = "paid_at", columnDefinition = "DATETIME")
+    private LocalDateTime paidAt;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "DATETIME")
@@ -58,12 +62,4 @@ public class User {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false, columnDefinition = "DATETIME")
     private LocalDateTime updatedAt;
-
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private Set<Role> roles = new HashSet<>();
 }

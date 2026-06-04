@@ -1,10 +1,8 @@
 package com.example.smartworkspace.entities;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
-import com.example.smartworkspace.enums.UserStatus;
+import com.example.smartworkspace.enums.ShipmentStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -14,8 +12,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -29,27 +26,31 @@ import org.hibernate.annotations.UpdateTimestamp;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "users")
-public class User {
+@Table(name = "shipments")
+public class Shipment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "full_name", nullable = false, length = 150)
-    private String fullName;
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "order_id", nullable = false, unique = true)
+    private Order order;
 
-    @Column(nullable = false, unique = true, length = 255)
-    private String email;
+    @Column(name = "carrier_name", length = 100)
+    private String carrierName;
 
-    @Column(unique = true, length = 30)
-    private String phone;
-
-    @Column(name = "password_hash", nullable = false, length = 255)
-    private String passwordHash;
+    @Column(name = "tracking_code", unique = true, length = 100)
+    private String trackingCode;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
-    private UserStatus status = UserStatus.ACTIVE;
+    @Column(name = "shipping_status", nullable = false, length = 50)
+    private ShipmentStatus shippingStatus = ShipmentStatus.PENDING;
+
+    @Column(name = "estimated_delivery_date", columnDefinition = "DATETIME")
+    private LocalDateTime estimatedDeliveryDate;
+
+    @Column(name = "delivered_at", columnDefinition = "DATETIME")
+    private LocalDateTime deliveredAt;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "DATETIME")
@@ -58,12 +59,4 @@ public class User {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false, columnDefinition = "DATETIME")
     private LocalDateTime updatedAt;
-
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private Set<Role> roles = new HashSet<>();
 }

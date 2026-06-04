@@ -1,20 +1,19 @@
 package com.example.smartworkspace.entities;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.example.smartworkspace.enums.UserStatus;
+import com.example.smartworkspace.enums.CommonStatus;
+import com.example.smartworkspace.enums.DiscountType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -29,27 +28,34 @@ import org.hibernate.annotations.UpdateTimestamp;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "users")
-public class User {
+@Table(name = "promotions")
+public class Promotion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "full_name", nullable = false, length = 150)
-    private String fullName;
+    @Column(nullable = false, length = 150)
+    private String name;
 
-    @Column(nullable = false, unique = true, length = 255)
-    private String email;
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
-    @Column(unique = true, length = 30)
-    private String phone;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "discount_type", nullable = false, length = 50)
+    private DiscountType discountType;
 
-    @Column(name = "password_hash", nullable = false, length = 255)
-    private String passwordHash;
+    @Column(name = "discount_value", nullable = false, precision = 15, scale = 2)
+    private BigDecimal discountValue;
+
+    @Column(name = "start_date", nullable = false, columnDefinition = "DATETIME")
+    private LocalDateTime startDate;
+
+    @Column(name = "end_date", nullable = false, columnDefinition = "DATETIME")
+    private LocalDateTime endDate;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
-    private UserStatus status = UserStatus.ACTIVE;
+    private CommonStatus status = CommonStatus.ACTIVE;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "DATETIME")
@@ -59,11 +65,6 @@ public class User {
     @Column(name = "updated_at", nullable = false, columnDefinition = "DATETIME")
     private LocalDateTime updatedAt;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private Set<Role> roles = new HashSet<>();
+    @ManyToMany(mappedBy = "promotions")
+    private Set<Product> products = new HashSet<>();
 }
