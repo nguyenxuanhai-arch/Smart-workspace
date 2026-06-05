@@ -73,9 +73,15 @@ API admin:
 - `POST /api/admin/products`
 - `PUT /api/admin/products/{id}`
 - `DELETE /api/admin/products/{id}`
+- `POST /api/admin/uploads/product-images`
 - `POST /api/admin/categories`
 - `PUT /api/admin/categories/{id}`
 - `DELETE /api/admin/categories/{id}`
+
+Ghi chú ảnh sản phẩm:
+- Product API vẫn lưu ảnh bằng trường `imageUrls`.
+- Nếu admin upload file ảnh từ máy, backend lưu file vào folder local trong project và trả về URL.
+- Admin dùng URL trả về để đưa vào `imageUrls` khi tạo hoặc sửa product.
 
 ---
 
@@ -286,7 +292,7 @@ API:
 ## 3. Nice To Have
 
 Chỉ làm nếu còn thời gian:
-- Upload ảnh sản phẩm local
+- Tách file storage sang cloud nếu cần
 - Swagger đầy đủ mô tả API
 - Export Postman collection
 - Coupon nâng cao
@@ -308,3 +314,45 @@ Không làm:
 - Docker nâng cao
 - Kubernetes
 - CI/CD phức tạp
+
+---
+
+## 5. Local File Storage
+
+Bản lab dùng local file storage để admin upload ảnh sản phẩm khi demo.
+
+Không tích hợp Amazon S3 hoặc cloud storage trong phạm vi hiện tại.
+
+Folder lưu file trong project:
+
+```txt
+backend/uploads/products
+```
+
+URL public đề xuất:
+
+```txt
+/uploads/products/{fileName}
+```
+
+Use case hỗ trợ trước:
+- Product images
+
+Luồng xử lý:
+1. Admin gọi API upload ảnh sản phẩm với `multipart/form-data`.
+2. Backend validate file.
+3. Backend tạo tên file an toàn và không trùng.
+4. Backend lưu file vào `backend/uploads/products`.
+5. Backend trả về URL dạng `/uploads/products/{fileName}`.
+6. Admin đưa URL này vào `imageUrls` khi gọi `POST /api/admin/products` hoặc `PUT /api/admin/products/{id}`.
+
+Quy tắc validate đề xuất:
+- Chỉ cho phép file ảnh: `image/jpeg`, `image/png`, `image/webp`.
+- Dung lượng tối đa mỗi file: `5MB`.
+- Không dùng trực tiếp tên file gốc để lưu.
+- Không cho phép path traversal như `../`.
+- Folder `uploads` là dữ liệu runtime local, không phải migration database.
+
+Lưu ý demo:
+- File local chỉ phù hợp chạy demo trên máy dev.
+- Nếu deploy thật, nên thay bằng cloud storage và giữ nguyên contract trả URL để ít ảnh hưởng Product API.

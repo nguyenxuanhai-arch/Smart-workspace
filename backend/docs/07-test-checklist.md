@@ -20,6 +20,7 @@ Trước khi test:
 - [ ] Có seed roles ADMIN và CUSTOMER
 - [ ] Có seed categories
 - [ ] Có seed products mẫu
+- [ ] Folder `backend/uploads/products` tồn tại hoặc app tự tạo khi upload
 
 Base URL:
 
@@ -85,7 +86,14 @@ http://localhost:8080/api
 
 ### Admin products
 
+- [ ] ADMIN upload ảnh product local thành công
+- [ ] Upload file không phải ảnh bị lỗi validation
+- [ ] Upload file quá dung lượng bị lỗi validation
+- [ ] Response upload trả `url` dạng `/uploads/products/{fileName}`
+- [ ] URL ảnh local truy cập được bằng trình duyệt/Postman
 - [ ] ADMIN tạo product thành công
+- [ ] Product tạo mới lưu được `imageUrls` từ URL ảnh local
+- [ ] Product response trả lại `images` có URL ảnh local
 - [ ] ADMIN sửa product thành công
 - [ ] ADMIN xóa mềm product thành công
 - [ ] CUSTOMER không được gọi admin product API

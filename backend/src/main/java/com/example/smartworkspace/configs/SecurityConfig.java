@@ -52,7 +52,8 @@ public class SecurityConfig {
                                 "/api/policies",
                                 "/api/policies/**",
                                 "/api/store-locations",
-                                "/api/store-locations/**"
+                                "/api/store-locations/**",
+                                "/uploads/products/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/feedbacks").permitAll()
                         .requestMatchers(HttpMethod.POST,

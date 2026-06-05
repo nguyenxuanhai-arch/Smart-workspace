@@ -193,6 +193,42 @@
             "method": "GET",
             "url": "{{baseUrl}}/api/products?minPrice=100000&maxPrice=5000000&sort=price_asc&page=0&size=10"
           }
+        },
+        {
+          "name": "Admin upload product image local",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Upload product image succeeds', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "if (body.data && body.data.url) { pm.collectionVariables.set('productImageUrl', body.data.url); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/admin/uploads/product-images"
+          }
         }
       ]
     },
@@ -773,6 +809,10 @@
     {
       "key": "productId",
       "value": "1"
+    },
+    {
+      "key": "productImageUrl",
+      "value": ""
     },
     {
       "key": "cartItemId",

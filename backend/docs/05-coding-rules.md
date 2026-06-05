@@ -39,7 +39,7 @@ Không dùng thư mục `module/`.
 Cấu trúc package chính:
 
 ```txt
-com.smartworkspace.backend
+com.example.smartworkspace
 ├── config
 ├── security
 ├── common
@@ -77,7 +77,7 @@ Không để Controller gọi Repository trực tiếp.
 Package gốc:
 
 ```txt
-com.smartworkspace.backend
+com.example.smartworkspace
 ```
 
 Tên package dùng chữ thường, không dùng dấu gạch ngang.
@@ -85,19 +85,19 @@ Tên package dùng chữ thường, không dùng dấu gạch ngang.
 Ví dụ đúng:
 
 ```txt
-com.smartworkspace.backend.controller
-com.smartworkspace.backend.service
-com.smartworkspace.backend.repository
-com.smartworkspace.backend.entity
-com.smartworkspace.backend.dto.product
+com.example.smartworkspace.controller
+com.example.smartworkspace.service
+com.example.smartworkspace.repository
+com.example.smartworkspace.entity
+com.example.smartworkspace.dto.product
 ```
 
 Ví dụ sai:
 
 ```txt
-com.smartworkspace.backend.ProductModule
-com.smartworkspace.backend.product-module
-com.smartworkspace.backend.module.product
+com.example.smartworkspace.ProductModule
+com.example.smartworkspace.product-module
+com.example.smartworkspace.module.product
 ```
 
 ---
@@ -268,6 +268,7 @@ GET /api/categories
 GET /api/policies
 GET /api/store-locations
 POST /api/feedbacks
+GET /uploads/products/**
 ```
 
 API cần đăng nhập:
@@ -511,3 +512,37 @@ Không làm các phần sau nếu chưa được yêu cầu:
 - CI/CD phức tạp
 
 Ưu tiên hoàn thành chức năng chính trước.
+
+---
+
+## 19. Local File Storage Rules
+
+Upload file local chỉ dùng cho demo lab, trước mắt áp dụng cho ảnh sản phẩm.
+
+Folder lưu file:
+
+```txt
+backend/uploads/products
+```
+
+Endpoint đề xuất:
+
+```txt
+POST /api/admin/uploads/product-images
+```
+
+Quy tắc:
+
+- Chỉ admin được upload ảnh sản phẩm.
+- Controller nhận `multipart/form-data` với field `file`.
+- Service xử lý validate, tạo tên file an toàn, lưu file, trả URL.
+- Không lưu binary file vào database.
+- Product vẫn lưu ảnh bằng trường `imageUrls`.
+- API upload trả URL dạng `/uploads/products/{fileName}` để client đưa vào `imageUrls`.
+- Không dùng trực tiếp tên file gốc làm tên file lưu trên server.
+- Không cho phép path traversal như `../`.
+- Chỉ nhận `image/jpeg`, `image/png`, `image/webp`.
+- Dung lượng tối đa mỗi file là `5MB`.
+- Không cần tạo Flyway migration cho folder upload local.
+
+Nếu sau này đổi sang cloud storage, giữ nguyên response URL để Product API ít phải thay đổi.

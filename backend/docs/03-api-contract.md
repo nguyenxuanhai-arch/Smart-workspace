@@ -170,6 +170,62 @@ PUT /api/admin/products/{id}
 DELETE /api/admin/products/{id}
 ```
 
+Upload product image:
+
+```txt
+POST /api/admin/uploads/product-images
+```
+
+Header:
+
+```txt
+Authorization: Bearer <admin-token>
+Content-Type: multipart/form-data
+```
+
+Form data:
+
+```txt
+file: <image-file>
+```
+
+Validation:
+- Chỉ nhận `image/jpeg`, `image/png`, `image/webp`.
+- Dung lượng tối đa mỗi file: `5MB`.
+- Nếu file không hợp lệ, trả lỗi `INVALID_REQUEST`.
+
+Response:
+
+```json
+{
+  "success": true,
+  "message": "Upload product image successfully",
+  "data": {
+    "fileName": "20260605-153000-a1b2c3-desk.jpg",
+    "originalFileName": "desk.jpg",
+    "contentType": "image/jpeg",
+    "size": 245000,
+    "url": "/uploads/products/20260605-153000-a1b2c3-desk.jpg"
+  }
+}
+```
+
+File được lưu local trong project:
+
+```txt
+backend/uploads/products
+```
+
+File public được truy cập bằng:
+
+```txt
+GET /uploads/products/{fileName}
+```
+
+Lưu ý:
+- Endpoint upload chỉ tạo file và trả URL, chưa tạo product.
+- Khi tạo hoặc sửa product, client đưa URL đã upload vào `imageUrls`.
+
 Create request:
 
 ```json
@@ -185,7 +241,7 @@ Create request:
   "sku": "SW-DESK-001",
   "status": "ACTIVE",
   "imageUrls": [
-    "https://example.com/desk-1.jpg"
+    "/uploads/products/20260605-153000-a1b2c3-desk.jpg"
   ]
 }
 ```

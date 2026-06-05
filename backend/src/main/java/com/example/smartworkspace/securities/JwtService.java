@@ -33,10 +33,10 @@ public class JwtService {
 
     private final ObjectMapper objectMapper;
 
-    @Value("${app.jwt.secret:}")
+    @Value("${app.jwt.secret}")
     private String configuredSecret;
 
-    @Value("${app.jwt.expiration-ms:86400000}")
+    @Value("${app.jwt.expiration-ms}")
     private long expirationMs;
 
     private SecretKey secretKey;

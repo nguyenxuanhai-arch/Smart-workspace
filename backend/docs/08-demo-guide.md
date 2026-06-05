@@ -76,6 +76,29 @@ WHERE u.email = 'admin-demo@smartworkspace.local'
 2. `GET /api/products?search=desk`
 3. `GET /api/products?sort=price_asc`
 4. `GET /api/products?minPrice=100000&maxPrice=5000000`
+5. Admin upload ảnh:
+   - `POST /api/admin/uploads/product-images`
+   - Body `multipart/form-data`, field `file`
+   - Copy `data.url` trong response
+6. Admin tạo product:
+   - `POST /api/admin/products`
+   - Đưa URL vừa upload vào `imageUrls`
+
+Ví dụ `imageUrls` sau khi upload local:
+
+```json
+{
+  "imageUrls": [
+    "/uploads/products/20260605-153000-a1b2c3-desk.jpg"
+  ]
+}
+```
+
+Ảnh local mở trực tiếp bằng URL:
+
+```txt
+http://localhost:8080/uploads/products/20260605-153000-a1b2c3-desk.jpg
+```
 
 ### Cart, Order, Payment, Shipment
 

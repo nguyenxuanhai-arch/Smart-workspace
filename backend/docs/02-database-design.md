@@ -165,6 +165,11 @@ Field:
 - `sort_order`
 - `created_at`
 
+Ghi chú:
+- `imageUrls` là field DTO dùng cho request/response, không phải column trong bảng `products`.
+- Khi tạo hoặc sửa product, backend map từng URL trong `imageUrls` thành bản ghi trong bảng `product_images`.
+- File ảnh vật lý nằm trong `backend/uploads/products`, database chỉ lưu URL/path ảnh.
+
 ---
 
 ### 3.4 promotions

@@ -165,6 +165,10 @@ Không dùng:
 - [x] API admin sửa product
 - [x] API admin xóa mềm product
 - [x] Xử lý product images
+- [x] API admin upload ảnh product local
+- [x] Lưu file vào `backend/uploads/products`
+- [x] Serve file public qua `/uploads/products/**`
+- [x] Product create/update dùng URL upload trong `imageUrls`
 
 ---
 
@@ -246,6 +250,8 @@ Không dùng:
 - [x] Test admin authorization
 - [x] Test product listing
 - [x] Test search/filter/sort products
+- [x] Test upload ảnh product local
+- [x] Test tạo product với URL ảnh local
 - [x] Test cart flow
 - [x] Test create order
 - [x] Test payment mock
