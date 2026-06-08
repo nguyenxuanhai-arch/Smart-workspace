@@ -97,8 +97,10 @@ Response:
   "success": true,
   "message": "Login successfully",
   "data": {
-    "accessToken": "jwt-token",
+    "accessToken": "jwt-access-token",
+    "refreshToken": "raw-refresh-token",
     "tokenType": "Bearer",
+    "expiresIn": 900,
     "user": {
       "id": 1,
       "fullName": "Nguyen Van A",
@@ -111,6 +113,79 @@ Response:
 
 ---
 
+### Refresh token
+
+```txt
+POST /api/auth/refresh
+```
+
+Request:
+
+```json
+{
+  "refreshToken": "raw-refresh-token"
+}
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "message": "Refresh token successfully",
+  "data": {
+    "accessToken": "new-jwt-access-token",
+    "refreshToken": "new-raw-refresh-token",
+    "tokenType": "Bearer",
+    "expiresIn": 900
+  }
+}
+```
+
+Rule:
+- Refresh token hợp lệ thì backend cấp access token mới.
+- Backend đồng thời rotate refresh token: revoke token cũ và trả refresh token mới.
+- Nếu refresh token sai, đã revoke hoặc hết hạn thì trả lỗi.
+
+---
+
+### Logout
+
+```txt
+POST /api/auth/logout
+```
+
+Header:
+
+```txt
+Authorization: Bearer <access-token>
+```
+
+Request:
+
+```json
+{
+  "refreshToken": "raw-refresh-token"
+}
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "message": "Logout successfully",
+  "data": null
+}
+```
+
+Rule:
+- Backend revoke refresh token trong database.
+- Backend đưa `jti` của access token vào blacklist.
+- Access token đã logout không được dùng lại dù chưa hết hạn.
+
+---
+
 ### Me
 
 ```txt
@@ -120,7 +195,7 @@ GET /api/auth/me
 Header:
 
 ```txt
-Authorization: Bearer <token>
+Authorization: Bearer <access-token>
 ```
 
 ---

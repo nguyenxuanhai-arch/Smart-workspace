@@ -22,6 +22,10 @@ Cần có:
 - Lấy thông tin user hiện tại
 - Mã hóa mật khẩu bằng BCrypt
 - JWT authentication
+- Access token ngắn hạn
+- Refresh token để xin access token mới
+- Rotate refresh token sau mỗi lần refresh
+- Blacklist access token khi logout
 - Role CUSTOMER và ADMIN
 - Admin có thể xem danh sách người dùng nếu cần
 - User có thể quản lý địa chỉ nhận hàng
@@ -29,6 +33,8 @@ Cần có:
 API chính:
 - `POST /api/auth/register`
 - `POST /api/auth/login`
+- `POST /api/auth/refresh`
+- `POST /api/auth/logout`
 - `GET /api/auth/me`
 - `GET /api/users/me`
 - `PUT /api/users/me`
@@ -36,6 +42,15 @@ API chính:
 - `POST /api/users/me/addresses`
 - `PUT /api/users/me/addresses/{id}`
 - `DELETE /api/users/me/addresses/{id}`
+
+Ghi chú refresh token và blacklist token:
+- Login trả về cả `accessToken` và `refreshToken`.
+- `accessToken` là JWT ngắn hạn, ví dụ 15 phút.
+- `refreshToken` dùng để xin access token mới, thời gian sống dài hơn, ví dụ 7 ngày.
+- Refresh token phải lưu trong database ở dạng hash, không lưu raw token.
+- Mỗi lần gọi refresh thành công thì revoke refresh token cũ và cấp refresh token mới.
+- Logout sẽ revoke refresh token và đưa `jti` của access token vào blacklist đến khi access token hết hạn.
+- Không cần dùng Redis trong bản lab, có thể lưu blacklist token bằng MySQL.
 
 ---
 

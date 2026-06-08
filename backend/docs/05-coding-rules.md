@@ -261,6 +261,7 @@ API public:
 ```txt
 POST /api/auth/register
 POST /api/auth/login
+POST /api/auth/refresh
 GET /api/products
 GET /api/products/{id}
 GET /api/products/slug/{slug}
@@ -275,6 +276,7 @@ API cần đăng nhập:
 
 ```txt
 /api/auth/me
+/api/auth/logout
 /api/users/me/**
 /api/cart/**
 /api/orders/**
@@ -409,6 +411,7 @@ V1__init_schema.sql
 V2__seed_roles.sql
 V3__seed_categories.sql
 V4__seed_products.sql
+V5__add_refresh_token_and_blacklist_token.sql
 ```
 
 Không sửa migration cũ nếu đã chạy.
@@ -416,7 +419,7 @@ Không sửa migration cũ nếu đã chạy.
 Nếu cần đổi schema, tạo migration mới:
 
 ```txt
-V5__alter_products_add_discount_price.sql
+V5__add_refresh_token_and_blacklist_token.sql
 ```
 
 ---
@@ -481,13 +484,15 @@ Sau khi làm xong mỗi chức năng, cần có hướng dẫn test bằng Postm
 
 1. Register
 2. Login
-3. Lấy token
-4. Xem danh sách sản phẩm
-5. Thêm sản phẩm vào giỏ
-6. Tạo đơn hàng
-7. Admin cập nhật đơn hàng
-8. User đánh giá sản phẩm
-9. Gửi feedback
+3. Lấy access token và refresh token
+4. Refresh token
+5. Logout và kiểm tra token cũ bị chặn
+6. Xem danh sách sản phẩm
+7. Thêm sản phẩm vào giỏ
+8. Tạo đơn hàng
+9. Admin cập nhật đơn hàng
+10. User đánh giá sản phẩm
+11. Gửi feedback
 
 ---
 
@@ -546,3 +551,38 @@ Quy tắc:
 - Không cần tạo Flyway migration cho folder upload local.
 
 Nếu sau này đổi sang cloud storage, giữ nguyên response URL để Product API ít phải thay đổi.
+
+---
+
+## 20. Refresh Token & Blacklist Rules
+
+Auth flow dùng 2 loại token:
+
+```txt
+accessToken: JWT ngắn hạn, dùng để gọi API
+refreshToken: token dài hạn hơn, dùng để xin accessToken mới
+```
+
+Quy tắc access token:
+- Access token phải có claim `jti` để định danh token.
+- Access token nên có thời gian sống ngắn, ví dụ 15 phút.
+- Access token không cần lưu database.
+- Khi logout, lưu `jti` của access token vào bảng `blacklisted_tokens`.
+- `JwtAuthenticationFilter` phải kiểm tra blacklist trước khi set authentication.
+
+Quy tắc refresh token:
+- Refresh token phải là chuỗi random đủ mạnh, không phải JWT cũng được.
+- Chỉ trả raw refresh token cho client sau login hoặc refresh.
+- Database chỉ lưu hash của refresh token, không lưu raw token.
+- Refresh token nên có thời gian sống dài hơn access token, ví dụ 7 ngày.
+- Khi refresh thành công, phải rotate token: revoke refresh token cũ và cấp refresh token mới.
+- Khi logout, phải revoke refresh token hiện tại.
+
+Endpoint rule:
+- `POST /api/auth/refresh` là public vì access token có thể đã hết hạn.
+- `POST /api/auth/logout` cần access token hợp lệ để blacklist đúng phiên hiện tại.
+
+Scope lab:
+- Không cần Redis blacklist.
+- Không cần refresh token family phức tạp.
+- Có thể dọn blacklist/refresh token hết hạn bằng service hoặc task đơn giản nếu cần demo.

@@ -20,7 +20,7 @@ http://localhost:8080/swagger-ui/index.html
 
 1. MySQL đang chạy.
 2. App Spring Boot chạy ở port `8080`.
-3. Flyway đã migrate đủ 4 migration.
+3. Flyway đã migrate đủ migration hiện có. Khi triển khai refresh token, cần có thêm `V5__add_refresh_token_and_blacklist_token.sql`.
 4. Seed roles, categories, products đã có.
 
 Chạy kiểm tra nhanh:
@@ -57,7 +57,7 @@ WHERE u.email = 'admin-demo@smartworkspace.local'
   AND r.name = 'ADMIN';
 ```
 
-3. Gọi `POST /api/auth/login` với email/password trên để lấy admin token.
+3. Gọi `POST /api/auth/login` với email/password trên để lấy admin access token và refresh token.
 
 ---
 
@@ -67,8 +67,40 @@ WHERE u.email = 'admin-demo@smartworkspace.local'
 
 1. `POST /api/auth/register`
 2. `POST /api/auth/login`
-3. `GET /api/auth/me` với customer token
-4. Gọi thử `GET /api/admin/dashboard` bằng customer token để thấy `403`
+3. `GET /api/auth/me` với customer access token
+4. `POST /api/auth/refresh` với customer refresh token để lấy token mới
+5. Gọi thử `GET /api/admin/dashboard` bằng customer token để thấy `403`
+6. `POST /api/auth/logout` để revoke refresh token và blacklist access token
+7. Gọi lại `GET /api/auth/me` bằng access token đã logout để thấy `401`
+
+### Auth refresh/logout mẫu sau Phase 13
+
+Refresh token:
+
+```txt
+POST /api/auth/refresh
+```
+
+```json
+{
+  "refreshToken": "{{customerRefreshToken}}"
+}
+```
+
+Logout:
+
+```txt
+POST /api/auth/logout
+Authorization: Bearer {{customerToken}}
+```
+
+```json
+{
+  "refreshToken": "{{customerRefreshToken}}"
+}
+```
+
+Sau khi logout, gọi lại API cần đăng nhập bằng access token cũ để kiểm tra token đã bị blacklist.
 
 ### Product
 
@@ -166,5 +198,6 @@ Postman collection có script tự lưu:
 Lưu ý:
 
 - Admin request cần user `admin-demo@smartworkspace.local` đã được gán role `ADMIN`.
+- Sau khi triển khai refresh token, collection nên lưu thêm `customerRefreshToken` và `adminRefreshToken`.
 - Nếu chạy lại collection nhiều lần, các API unique như review một product hoặc policy type có thể trả conflict. Khi cần demo sạch, dùng email customer mới hoặc reset database local.
 - Collection ưu tiên flow demo, không thay thế kiểm thử tự động đầy đủ.
