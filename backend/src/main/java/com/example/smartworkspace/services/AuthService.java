@@ -1,5 +1,10 @@
 package com.example.smartworkspace.services;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.Locale;
 import java.util.Set;
 
@@ -8,13 +13,19 @@ import com.example.smartworkspace.commons.ErrorCode;
 import com.example.smartworkspace.dtos.auth.AuthUserResponse;
 import com.example.smartworkspace.dtos.auth.LoginRequest;
 import com.example.smartworkspace.dtos.auth.LoginResponse;
+import com.example.smartworkspace.dtos.auth.LogoutRequest;
+import com.example.smartworkspace.dtos.auth.RefreshTokenRequest;
 import com.example.smartworkspace.dtos.auth.RegisterRequest;
 import com.example.smartworkspace.dtos.auth.RegisterResponse;
+import com.example.smartworkspace.entities.BlacklistedToken;
+import com.example.smartworkspace.entities.RefreshToken;
 import com.example.smartworkspace.entities.Role;
 import com.example.smartworkspace.entities.User;
 import com.example.smartworkspace.enums.RoleName;
 import com.example.smartworkspace.enums.UserStatus;
 import com.example.smartworkspace.mappers.UserMapper;
+import com.example.smartworkspace.repositories.BlacklistedTokenRepository;
+import com.example.smartworkspace.repositories.RefreshTokenRepository;
 import com.example.smartworkspace.repositories.RoleRepository;
 import com.example.smartworkspace.repositories.UserRepository;
 import com.example.smartworkspace.securities.CustomUserDetails;
@@ -33,13 +44,17 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AuthService {
     private static final String TOKEN_TYPE = "Bearer";
+    private static final String BEARER_PREFIX = "Bearer ";
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final BlacklistedTokenRepository blacklistedTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final UserMapper userMapper;
+    private final SecureRandom secureRandom = new SecureRandom();
 
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
@@ -67,7 +82,7 @@ public class AuthService {
         return userMapper.toRegisterResponse(userRepository.save(user));
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public LoginResponse login(LoginRequest request) {
         String email = normalizeEmail(request.getEmail());
         Authentication authentication;
@@ -80,11 +95,26 @@ public class AuthService {
         }
 
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        return LoginResponse.builder()
-                .accessToken(jwtService.generateToken(userDetails))
-                .tokenType(TOKEN_TYPE)
-                .user(userMapper.toAuthUserResponse(userDetails.getUser()))
-                .build();
+        return buildLoginResponse(userDetails);
+    }
+
+    @Transactional
+    public LoginResponse refresh(RefreshTokenRequest request) {
+        RefreshToken refreshToken = getUsableRefreshToken(request.getRefreshToken());
+        revokeRefreshToken(refreshToken);
+        return buildLoginResponse(new CustomUserDetails(refreshToken.getUser()));
+    }
+
+    @Transactional
+    public void logout(LogoutRequest request, String authorizationHeader) {
+        CustomUserDetails userDetails = getCurrentUserDetails();
+        RefreshToken refreshToken = getUsableRefreshToken(request.getRefreshToken());
+        if (!refreshToken.getUser().getId().equals(userDetails.getUser().getId())) {
+            throw new AppException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        revokeRefreshToken(refreshToken);
+        blacklistAccessToken(resolveAccessToken(authorizationHeader));
     }
 
     @Transactional(readOnly = true)
@@ -99,6 +129,92 @@ public class AuthService {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
         return userDetails;
+    }
+
+    private LoginResponse buildLoginResponse(CustomUserDetails userDetails) {
+        String accessToken = jwtService.generateToken(userDetails);
+        String refreshToken = createRefreshToken(userDetails.getUser());
+        return LoginResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .tokenType(TOKEN_TYPE)
+                .expiresIn(jwtService.getAccessTokenExpirationMs() / 1000)
+                .user(userMapper.toAuthUserResponse(userDetails.getUser()))
+                .build();
+    }
+
+    private String createRefreshToken(User user) {
+        String rawToken = generateRawRefreshToken();
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setUser(userRepository.getReferenceById(user.getId()));
+        refreshToken.setTokenHash(hashToken(rawToken));
+        refreshToken.setRevoked(false);
+        refreshToken.setExpiresAt(LocalDateTime.now().plusSeconds(jwtService.getRefreshTokenExpirationMs() / 1000));
+        refreshTokenRepository.save(refreshToken);
+        return rawToken;
+    }
+
+    private RefreshToken getUsableRefreshToken(String rawToken) {
+        RefreshToken refreshToken = refreshTokenRepository.findByTokenHashAndRevokedFalse(hashToken(rawToken))
+                .orElseThrow(() -> new AppException(ErrorCode.INVALID_REFRESH_TOKEN));
+        if (!refreshToken.getExpiresAt().isAfter(LocalDateTime.now())) {
+            revokeRefreshToken(refreshToken);
+            throw new AppException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+        return refreshToken;
+    }
+
+    private void revokeRefreshToken(RefreshToken refreshToken) {
+        refreshToken.setRevoked(true);
+        refreshToken.setRevokedAt(LocalDateTime.now());
+    }
+
+    private void blacklistAccessToken(String accessToken) {
+        if (accessToken == null) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        String jti = jwtService.extractJti(accessToken);
+        LocalDateTime expiresAt = jwtService.extractExpiresAt(accessToken);
+        if (jti == null || expiresAt == null) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        if (!expiresAt.isAfter(LocalDateTime.now()) || blacklistedTokenRepository.existsByJti(jti)) {
+            return;
+        }
+
+        BlacklistedToken blacklistedToken = new BlacklistedToken();
+        blacklistedToken.setJti(jti);
+        blacklistedToken.setExpiresAt(expiresAt);
+        blacklistedTokenRepository.save(blacklistedToken);
+    }
+
+    private String resolveAccessToken(String authorizationHeader) {
+        if (authorizationHeader == null || !authorizationHeader.startsWith(BEARER_PREFIX)) {
+            return null;
+        }
+        return authorizationHeader.substring(BEARER_PREFIX.length());
+    }
+
+    private String generateRawRefreshToken() {
+        byte[] bytes = new byte[32];
+        secureRandom.nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    private String hashToken(String rawToken) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashedBytes = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));
+            StringBuilder builder = new StringBuilder(hashedBytes.length * 2);
+            for (byte hashedByte : hashedBytes) {
+                builder.append(String.format("%02x", hashedByte));
+            }
+            return builder.toString();
+        } catch (Exception exception) {
+            throw new IllegalStateException("Could not hash token", exception);
+        }
     }
 
     private String normalizeEmail(String email) {

@@ -267,24 +267,24 @@ Không dùng:
 
 ## Phase 13 - Refresh Token & Token Blacklist
 
-- [ ] Tạo migration `V5__add_refresh_token_and_blacklist_token.sql`
-- [ ] Tạo bảng `refresh_tokens`
-- [ ] Tạo bảng `blacklisted_tokens`
-- [ ] Tạo entity RefreshToken
-- [ ] Tạo entity BlacklistedToken
-- [ ] Tạo repository RefreshTokenRepository
-- [ ] Tạo repository BlacklistedTokenRepository
-- [ ] Thêm claim `jti` vào access token trong `JwtService`
-- [ ] Thêm cấu hình thời hạn access token và refresh token
-- [ ] Tạo DTO refresh/logout request
-- [ ] Login trả thêm `refreshToken` và `expiresIn`
-- [ ] API `POST /api/auth/refresh`
-- [ ] API `POST /api/auth/logout`
-- [ ] Refresh token được lưu DB dưới dạng hash
-- [ ] Refresh token được rotate sau mỗi lần refresh thành công
-- [ ] Logout revoke refresh token
-- [ ] Logout blacklist access token theo `jti`
-- [ ] `JwtAuthenticationFilter` kiểm tra blacklist trước khi xác thực
-- [ ] Test refresh token thành công và trả token mới
-- [ ] Test dùng lại access token sau logout bị 401
-- [ ] Test dùng lại refresh token cũ sau refresh/logout bị lỗi
+- [x] Tạo migration `V5__add_refresh_token_and_blacklist_token.sql`
+- [x] Tạo bảng `refresh_tokens`
+- [x] Tạo bảng `blacklisted_tokens`
+- [x] Tạo entity RefreshToken
+- [x] Tạo entity BlacklistedToken
+- [x] Tạo repository RefreshTokenRepository
+- [x] Tạo repository BlacklistedTokenRepository
+- [x] Thêm claim `jti` vào access token trong `JwtService`
+- [x] Thêm cấu hình thời hạn access token và refresh token
+- [x] Tạo DTO refresh/logout request
+- [x] Login trả thêm `refreshToken` và `expiresIn`
+- [x] API `POST /api/auth/refresh`
+- [x] API `POST /api/auth/logout`
+- [x] Refresh token được lưu DB dưới dạng hash
+- [x] Refresh token được rotate sau mỗi lần refresh thành công
+- [x] Logout revoke refresh token
+- [x] Logout blacklist access token theo `jti`
+- [x] `JwtAuthenticationFilter` kiểm tra blacklist trước khi xác thực
+- [x] Test refresh token thành công và trả token mới
+- [x] Test dùng lại access token sau logout bị 401
+- [x] Test dùng lại refresh token cũ sau refresh/logout bị lỗi

@@ -11,6 +11,7 @@ public enum ErrorCode {
     VALIDATION_ERROR("Validation failed", HttpStatus.BAD_REQUEST),
     UNAUTHORIZED("Unauthorized", HttpStatus.UNAUTHORIZED),
     FORBIDDEN("Forbidden", HttpStatus.FORBIDDEN),
+    INVALID_REFRESH_TOKEN("Invalid refresh token", HttpStatus.UNAUTHORIZED),
 
     USER_NOT_FOUND("User not found", HttpStatus.NOT_FOUND),
     ROLE_NOT_FOUND("Role not found", HttpStatus.NOT_FOUND),

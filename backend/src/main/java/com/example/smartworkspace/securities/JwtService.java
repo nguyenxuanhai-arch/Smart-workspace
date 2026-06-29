@@ -4,10 +4,13 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
@@ -39,6 +42,9 @@ public class JwtService {
     @Value("${app.jwt.expiration-ms}")
     private long expirationMs;
 
+    @Value("${app.jwt.refresh-expiration-ms}")
+    private long refreshExpirationMs;
+
     private SecretKey secretKey;
 
     @PostConstruct
@@ -60,6 +66,7 @@ public class JwtService {
         header.put("typ", "JWT");
 
         Map<String, Object> claims = new LinkedHashMap<>();
+        claims.put("jti", UUID.randomUUID().toString());
         claims.put("sub", userDetails.getUsername());
         claims.put("iat", now.getEpochSecond());
         claims.put("exp", now.plusMillis(expirationMs).getEpochSecond());
@@ -76,6 +83,30 @@ public class JwtService {
                 .filter(String.class::isInstance)
                 .map(String.class::cast)
                 .orElse(null);
+    }
+
+    public String extractJti(String token) {
+        return parseClaims(token)
+                .map(claims -> claims.get("jti"))
+                .filter(String.class::isInstance)
+                .map(String.class::cast)
+                .orElse(null);
+    }
+
+    public LocalDateTime extractExpiresAt(String token) {
+        return parseClaims(token)
+                .map(claims -> claims.get("exp"))
+                .map(this::toLong)
+                .map(expiration -> LocalDateTime.ofInstant(Instant.ofEpochSecond(expiration), ZoneId.systemDefault()))
+                .orElse(null);
+    }
+
+    public long getAccessTokenExpirationMs() {
+        return expirationMs;
+    }
+
+    public long getRefreshTokenExpirationMs() {
+        return refreshExpirationMs;
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {

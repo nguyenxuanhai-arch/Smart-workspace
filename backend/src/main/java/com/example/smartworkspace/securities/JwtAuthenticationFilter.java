@@ -2,6 +2,7 @@ package com.example.smartworkspace.securities;
 
 import java.io.IOException;
 
+import com.example.smartworkspace.repositories.BlacklistedTokenRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,6 +25,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final CustomUserDetailsService customUserDetailsService;
+    private final BlacklistedTokenRepository blacklistedTokenRepository;
 
     @Override
     protected void doFilterInternal(
@@ -41,6 +43,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private void authenticateRequest(HttpServletRequest request, String token) {
         try {
+            String jti = jwtService.extractJti(token);
+            if (jti == null || blacklistedTokenRepository.existsByJti(jti)) {
+                return;
+            }
+
             String email = jwtService.extractUsername(token);
             if (email == null) {
                 return;
