@@ -70,6 +70,8 @@ Nhóm sản phẩm:
 Backend cần hỗ trợ các nhóm chức năng:
 
 - Đăng ký, đăng nhập, lấy thông tin user
+- Refresh token để gia hạn phiên đăng nhập
+- Blacklist access token khi logout để token cũ không dùng lại được
 - Phân quyền user/admin
 - Quản lý sản phẩm
 - Quản lý danh mục
@@ -128,4 +130,5 @@ Backend cần:
 - Có Swagger hoặc Postman để demo API
 - Có dữ liệu seed mẫu
 - Có phân quyền admin/user
+- Có access token, refresh token và blacklist token cho auth flow
 - Không cần triển khai production thật

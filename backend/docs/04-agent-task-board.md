@@ -114,122 +114,126 @@ Không dùng:
 
 ## Phase 5 - Security & Auth
 
-- [ ] Tạo `SecurityConfig`
-- [ ] Tạo `JwtService`
-- [ ] Tạo `JwtAuthenticationFilter`
-- [ ] Tạo `CustomUserDetails`
-- [ ] Tạo `CustomUserDetailsService`
-- [ ] Cấu hình BCrypt password encoder
-- [ ] Cấu hình endpoint public/private/admin
-- [ ] Tạo Auth DTO
-- [ ] Tạo `AuthService`
-- [ ] Tạo `AuthController`
-- [ ] API register
-- [ ] API login
-- [ ] API me
-- [ ] Register tự gán role CUSTOMER
-- [ ] Test login lấy JWT token thành công
+- [x] Tạo `SecurityConfig`
+- [x] Tạo `JwtService`
+- [x] Tạo `JwtAuthenticationFilter`
+- [x] Tạo `CustomUserDetails`
+- [x] Tạo `CustomUserDetailsService`
+- [x] Cấu hình BCrypt password encoder
+- [x] Cấu hình endpoint public/private/admin
+- [x] Tạo Auth DTO
+- [x] Tạo `AuthService`
+- [x] Tạo `AuthController`
+- [x] API register
+- [x] API login
+- [x] API me
+- [x] Register tự gán role CUSTOMER
+- [x] Test login lấy JWT token thành công
 
 ---
 
 ## Phase 6 - User & Address
 
-- [ ] Tạo User DTO
-- [ ] Tạo Address DTO
-- [ ] API xem profile
-- [ ] API cập nhật profile
-- [ ] API xem danh sách địa chỉ
-- [ ] API thêm địa chỉ
-- [ ] API sửa địa chỉ
-- [ ] API xóa địa chỉ
-- [ ] Kiểm tra user chỉ sửa được địa chỉ của mình
+- [x] Tạo User DTO
+- [x] Tạo Address DTO
+- [x] API xem profile
+- [x] API cập nhật profile
+- [x] API xem danh sách địa chỉ
+- [x] API thêm địa chỉ
+- [x] API sửa địa chỉ
+- [x] API xóa địa chỉ
+- [x] Kiểm tra user chỉ sửa được địa chỉ của mình
 
 ---
 
 ## Phase 7 - Category & Product Catalog
 
-- [ ] Tạo Category DTO
-- [ ] Tạo Product DTO
-- [ ] Tạo ProductMapper
-- [ ] API public xem categories
-- [ ] API admin CRUD categories
-- [ ] API public xem danh sách products
-- [ ] API public xem product detail theo id
-- [ ] API public xem product detail theo slug
-- [ ] Search product theo keyword
-- [ ] Filter product theo category
-- [ ] Filter product theo giá
-- [ ] Sort product theo giá/ngày tạo
-- [ ] Pagination products
-- [ ] API admin tạo product
-- [ ] API admin sửa product
-- [ ] API admin xóa mềm product
-- [ ] Xử lý product images
+- [x] Tạo Category DTO
+- [x] Tạo Product DTO
+- [x] Tạo ProductMapper
+- [x] API public xem categories
+- [x] API admin CRUD categories
+- [x] API public xem danh sách products
+- [x] API public xem product detail theo id
+- [x] API public xem product detail theo slug
+- [x] Search product theo keyword
+- [x] Filter product theo category
+- [x] Filter product theo giá
+- [x] Sort product theo giá/ngày tạo
+- [x] Pagination products
+- [x] API admin tạo product
+- [x] API admin sửa product
+- [x] API admin xóa mềm product
+- [x] Xử lý product images
+- [x] API admin upload ảnh product local
+- [x] Lưu file vào `backend/uploads/products`
+- [x] Serve file public qua `/uploads/products/**`
+- [x] Product create/update dùng URL upload trong `imageUrls`
 
 ---
 
 ## Phase 8 - Cart
 
-- [ ] Tạo Cart DTO
-- [ ] API xem giỏ hàng
-- [ ] API thêm item vào giỏ
-- [ ] Nếu item đã tồn tại thì tăng số lượng
-- [ ] API cập nhật số lượng
-- [ ] API xóa item
-- [ ] Tính subtotal từng item
-- [ ] Tính total giỏ hàng
-- [ ] Chỉ user đăng nhập mới dùng được cart
+- [x] Tạo Cart DTO
+- [x] API xem giỏ hàng
+- [x] API thêm item vào giỏ
+- [x] Nếu item đã tồn tại thì tăng số lượng
+- [x] API cập nhật số lượng
+- [x] API xóa item
+- [x] Tính subtotal từng item
+- [x] Tính total giỏ hàng
+- [x] Chỉ user đăng nhập mới dùng được cart
 
 ---
 
 ## Phase 9 - Order, Payment, Shipment
 
-- [ ] Tạo Order DTO
-- [ ] Tạo Payment DTO
-- [ ] Tạo Shipment DTO
-- [ ] API tạo order từ cart
-- [ ] Lưu snapshot order_items
-- [ ] Tính subtotal, shipping fee, discount, total
-- [ ] Clear cart sau khi tạo order
-- [ ] API xem order của user
-- [ ] API xem chi tiết order
-- [ ] User chỉ xem được order của mình
-- [ ] Tạo payment mock
-- [ ] Hỗ trợ COD, BANK_TRANSFER, MOMO, ZALOPAY, VNPAY, CARD
-- [ ] Tạo shipment mock
-- [ ] Admin xem danh sách order
-- [ ] Admin cập nhật order status
-- [ ] Admin cập nhật payment status
-- [ ] Admin cập nhật shipment status
+- [x] Tạo Order DTO
+- [x] Tạo Payment DTO
+- [x] Tạo Shipment DTO
+- [x] API tạo order từ cart
+- [x] Lưu snapshot order_items
+- [x] Tính subtotal, shipping fee, discount, total
+- [x] Clear cart sau khi tạo order
+- [x] API xem order của user
+- [x] API xem chi tiết order
+- [x] User chỉ xem được order của mình
+- [x] Tạo payment mock
+- [x] Hỗ trợ COD, BANK_TRANSFER, MOMO, ZALOPAY, VNPAY, CARD
+- [x] Tạo shipment mock
+- [x] Admin xem danh sách order
+- [x] Admin cập nhật order status
+- [x] Admin cập nhật payment status
+- [x] Admin cập nhật shipment status
 
 ---
 
 ## Phase 10 - Review, Comment, Feedback
 
-- [ ] API xem reviews theo product
-- [ ] API tạo review
-- [ ] Validate rating 1-5
-- [ ] Chặn user review một product nhiều lần nếu áp dụng unique
-- [ ] API xem comments theo product
-- [ ] API tạo comment
-- [ ] Hỗ trợ reply comment bằng parentId
-- [ ] Admin cập nhật trạng thái review
-- [ ] Admin cập nhật trạng thái comment
-- [ ] API gửi feedback public
-- [ ] Admin xem feedback
-- [ ] Admin cập nhật trạng thái feedback
+- [x] API xem reviews theo product
+- [x] API tạo review
+- [x] Validate rating 1-5
+- [x] Chặn user review một product nhiều lần nếu áp dụng unique
+- [x] API xem comments theo product
+- [x] API tạo comment
+- [x] Hỗ trợ reply comment bằng parentId
+- [x] Admin cập nhật trạng thái review
+- [x] Admin cập nhật trạng thái comment
+- [x] API gửi feedback public
+- [x] Admin xem feedback
+- [x] Admin cập nhật trạng thái feedback
 
 ---
 
 ## Phase 11 - Policy, Store Location, Admin Dashboard
 
-- [ ] API public xem policies
-- [ ] API public xem policy theo type
-- [ ] Admin tạo/sửa policy
-- [ ] API public xem store locations
-- [ ] Admin CRUD store locations
-- [ ] Store location có Google Maps URL
-- [ ] Admin dashboard basic:
+- [x] API public xem policies
+- [x] API public xem policy theo type
+- [x] Admin tạo/sửa policy
+- [x] API public xem store locations
+- [x] Admin CRUD store locations
+- [x] Store location có Google Maps URL
+- [x] Admin dashboard basic:
   - Tổng sản phẩm
   - Tổng đơn hàng
   - Tổng doanh thu mock
@@ -240,19 +244,47 @@ Không dùng:
 
 ## Phase 12 - Testing & Demo
 
-- [ ] Test register
-- [ ] Test login
-- [ ] Test JWT `/auth/me`
-- [ ] Test admin authorization
-- [ ] Test product listing
-- [ ] Test search/filter/sort products
-- [ ] Test cart flow
-- [ ] Test create order
-- [ ] Test payment mock
-- [ ] Test admin update order
-- [ ] Test review/comment
-- [ ] Test feedback
-- [ ] Test policies
-- [ ] Test store locations
-- [ ] Chuẩn bị Swagger demo
-- [ ] Chuẩn bị Postman collection nếu có thời gian
+- [x] Test register
+- [x] Test login
+- [x] Test JWT `/auth/me`
+- [x] Test admin authorization
+- [x] Test product listing
+- [x] Test search/filter/sort products
+- [x] Test upload ảnh product local
+- [x] Test tạo product với URL ảnh local
+- [x] Test cart flow
+- [x] Test create order
+- [x] Test payment mock
+- [x] Test admin update order
+- [x] Test review/comment
+- [x] Test feedback
+- [x] Test policies
+- [x] Test store locations
+- [x] Chuẩn bị Swagger demo
+- [x] Chuẩn bị Postman collection nếu có thời gian
+
+---
+
+## Phase 13 - Refresh Token & Token Blacklist
+
+- [x] Tạo migration `V5__add_refresh_token_and_blacklist_token.sql`
+- [x] Tạo bảng `refresh_tokens`
+- [x] Tạo bảng `blacklisted_tokens`
+- [x] Tạo entity RefreshToken
+- [x] Tạo entity BlacklistedToken
+- [x] Tạo repository RefreshTokenRepository
+- [x] Tạo repository BlacklistedTokenRepository
+- [x] Thêm claim `jti` vào access token trong `JwtService`
+- [x] Thêm cấu hình thời hạn access token và refresh token
+- [x] Tạo DTO refresh/logout request
+- [x] Login trả thêm `refreshToken` và `expiresIn`
+- [x] API `POST /api/auth/refresh`
+- [x] API `POST /api/auth/logout`
+- [x] Refresh token được lưu DB dưới dạng hash
+- [x] Refresh token được rotate sau mỗi lần refresh thành công
+- [x] Logout revoke refresh token
+- [x] Logout blacklist access token theo `jti`
+- [x] `JwtAuthenticationFilter` kiểm tra blacklist trước khi xác thực
+- [x] Test refresh token thành công và trả token mới
+- [x] Test dùng lại access token sau logout bị 401
+- [x] Test dùng lại refresh token cũ sau refresh/logout bị lỗi

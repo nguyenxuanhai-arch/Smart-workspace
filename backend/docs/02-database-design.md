@@ -47,6 +47,8 @@ Quan hệ:
 - 1 user có 0 hoặc 1 cart active
 - 1 user có nhiều orders
 - 1 user có nhiều reviews/comments
+- 1 user có nhiều refresh token
+- 1 user có nhiều blacklisted token nếu logout nhiều phiên
 
 ---
 
@@ -94,6 +96,55 @@ Field:
 - `is_default`
 - `created_at`
 - `updated_at`
+
+---
+
+### 2.5 refresh_tokens
+
+Lưu refresh token để user có thể xin access token mới mà không cần đăng nhập lại.
+
+Field:
+- `id`
+- `user_id`
+- `token_hash`
+- `revoked`
+- `expires_at`
+- `created_at`
+- `revoked_at`
+- `replaced_by_token_hash`
+
+Rule:
+- Không lưu raw refresh token trong database.
+- Chỉ lưu hash của refresh token, ví dụ SHA-256.
+- `revoked = true` khi user logout hoặc khi refresh token đã được rotate.
+- `replaced_by_token_hash` dùng để lưu token mới thay thế token cũ sau khi rotate.
+- Refresh token hết hạn thì không được dùng để cấp access token mới.
+
+Quan hệ:
+- 1 refresh token thuộc 1 user.
+- 1 user có thể có nhiều refresh token nếu đăng nhập trên nhiều thiết bị.
+
+---
+
+### 2.6 blacklisted_tokens
+
+Lưu access token đã bị vô hiệu hóa trước thời điểm hết hạn, thường dùng khi user logout.
+
+Field:
+- `id`
+- `token_jti`
+- `user_id`
+- `expires_at`
+- `created_at`
+
+Rule:
+- Access token cần có claim `jti` để định danh duy nhất token.
+- Khi logout, backend lấy `jti` từ access token và lưu vào bảng này.
+- JWT filter phải kiểm tra `token_jti` có nằm trong blacklist không.
+- Chỉ cần giữ blacklist token đến khi access token hết hạn.
+
+Quan hệ:
+- 1 blacklisted token có thể thuộc 1 user.
 
 ---
 
@@ -164,6 +215,11 @@ Field:
 - `is_primary`
 - `sort_order`
 - `created_at`
+
+Ghi chú:
+- `imageUrls` là field DTO dùng cho request/response, không phải column trong bảng `products`.
+- Khi tạo hoặc sửa product, backend map từng URL trong `imageUrls` thành bản ghi trong bảng `product_images`.
+- File ảnh vật lý nằm trong `backend/uploads/products`, database chỉ lưu URL/path ảnh.
 
 ---
 
@@ -467,6 +523,8 @@ Tóm tắt quan hệ:
 ```txt
 users 1 - n addresses
 users n - n roles thông qua user_roles
+users 1 - n refresh_tokens
+users 1 - n blacklisted_tokens
 users 1 - n orders
 users 1 - 0..1 carts
 users 1 - n product_reviews
@@ -502,3 +560,11 @@ Các quan hệ nên cấu hình cẩn thận để tránh vòng lặp JSON.
 - Response DTO tự map dữ liệu cần trả.
 - Không lạm dụng `CascadeType.ALL`.
 - Không dùng `EAGER` bừa bãi.
+
+---
+
+## 11. Lưu ý lưu token
+
+Với refresh token, chỉ trả raw token một lần trong response sau login/refresh; database chỉ lưu hash token.
+
+Với access token blacklist, chỉ lưu `jti` và thời điểm hết hạn để có thể dọn dữ liệu cũ sau khi token hết hiệu lực.

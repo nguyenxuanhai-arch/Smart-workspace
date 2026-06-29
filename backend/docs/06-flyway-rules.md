@@ -33,6 +33,7 @@ V1__init_schema.sql
 V2__seed_roles.sql
 V3__seed_categories.sql
 V4__seed_products.sql
+V5__add_refresh_token_and_blacklist_token.sql
 ```
 
 Lưu ý:
@@ -54,6 +55,12 @@ Ví dụ:
 V5__alter_products_add_discount_price.sql
 V6__add_store_location_status.sql
 V7__create_coupons_table.sql
+```
+
+Với tính năng refresh token và blacklist token, migration mới đề xuất:
+
+```txt
+V5__add_refresh_token_and_blacklist_token.sql
 ```
 
 ---
@@ -164,6 +171,23 @@ Seed sản phẩm mẫu:
 
 ---
 
+### V5__add_refresh_token_and_blacklist_token.sql
+
+Thêm schema cho refresh token và blacklist token:
+
+- Tạo bảng `refresh_tokens`
+- Tạo bảng `blacklisted_tokens`
+- Tạo foreign key từ `refresh_tokens.user_id` đến `users.id`
+- Tạo foreign key từ `blacklisted_tokens.user_id` đến `users.id` nếu cần
+- Tạo index cho `token_hash`, `token_jti`, `expires_at`
+
+Rule:
+- Không sửa `V1__init_schema.sql` nếu database đã chạy migration.
+- Refresh token chỉ lưu hash, không lưu raw token.
+- Blacklist chỉ cần lưu `jti` của access token và thời điểm hết hạn.
+
+---
+
 ## 8. MySQL rules
 
 Nên dùng:
@@ -228,6 +252,11 @@ Nên tạo index cho các cột hay tìm kiếm:
 - `orders.order_code`
 - `product_reviews.product_id`
 - `product_comments.product_id`
+- `refresh_tokens.user_id`
+- `refresh_tokens.token_hash`
+- `refresh_tokens.expires_at`
+- `blacklisted_tokens.token_jti`
+- `blacklisted_tokens.expires_at`
 
 Ví dụ:
 

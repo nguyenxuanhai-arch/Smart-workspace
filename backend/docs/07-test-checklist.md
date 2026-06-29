@@ -20,6 +20,7 @@ Trước khi test:
 - [ ] Có seed roles ADMIN và CUSTOMER
 - [ ] Có seed categories
 - [ ] Có seed products mẫu
+- [ ] Folder `backend/uploads/products` tồn tại hoặc app tự tạo khi upload
 
 Base URL:
 
@@ -42,8 +43,29 @@ http://localhost:8080/api
 
 - [ ] Gọi `POST /auth/login`
 - [ ] Nhận được accessToken
+- [ ] Nhận được refreshToken
+- [ ] Nhận được expiresIn
 - [ ] Token type là Bearer
 - [ ] Sai password trả lỗi hợp lý
+
+### Refresh token
+
+- [ ] Gọi `POST /auth/refresh` với refreshToken hợp lệ
+- [ ] Nhận được accessToken mới
+- [ ] Nhận được refreshToken mới
+- [ ] Refresh token cũ bị revoke sau khi rotate
+- [ ] Dùng lại refresh token cũ thì bị lỗi
+- [ ] Refresh token sai thì trả lỗi hợp lý
+- [ ] Refresh token hết hạn thì trả lỗi hợp lý
+
+### Logout
+
+- [ ] Gọi `POST /auth/logout` với accessToken và refreshToken
+- [ ] Logout trả success
+- [ ] Refresh token bị revoke trong database
+- [ ] Access token bị đưa vào blacklist theo `jti`
+- [ ] Dùng lại access token sau logout thì bị 401
+- [ ] Dùng lại refresh token sau logout thì bị lỗi
 
 ### Me
 
@@ -57,6 +79,7 @@ http://localhost:8080/api
 
 - [ ] API public gọi được không cần token
 - [ ] API user không có token thì bị 401
+- [ ] API user dùng access token đã logout thì bị 401
 - [ ] API admin dùng CUSTOMER token thì bị 403
 - [ ] API admin dùng ADMIN token thì gọi được
 
@@ -85,7 +108,14 @@ http://localhost:8080/api
 
 ### Admin products
 
+- [ ] ADMIN upload ảnh product local thành công
+- [ ] Upload file không phải ảnh bị lỗi validation
+- [ ] Upload file quá dung lượng bị lỗi validation
+- [ ] Response upload trả `url` dạng `/uploads/products/{fileName}`
+- [ ] URL ảnh local truy cập được bằng trình duyệt/Postman
 - [ ] ADMIN tạo product thành công
+- [ ] Product tạo mới lưu được `imageUrls` từ URL ảnh local
+- [ ] Product response trả lại `images` có URL ảnh local
 - [ ] ADMIN sửa product thành công
 - [ ] ADMIN xóa mềm product thành công
 - [ ] CUSTOMER không được gọi admin product API
@@ -216,17 +246,19 @@ Demo nên đi theo thứ tự:
 
 1. Register user
 2. Login user
-3. Xem products
-4. Search/filter/sort products
-5. Thêm product vào cart
-6. Xem cart
-7. Tạo order
-8. Xem orders của user
-9. Admin login
-10. Admin xem orders
-11. Admin cập nhật order status
-12. User review sản phẩm
-13. User comment sản phẩm
-14. Khách gửi feedback
-15. Public xem policies
-16. Public xem store locations/Google Maps URL
+3. Refresh token để lấy token mới
+4. Xem products
+5. Search/filter/sort products
+6. Thêm product vào cart
+7. Xem cart
+8. Tạo order
+9. Xem orders của user
+10. Admin login
+11. Admin xem orders
+12. Admin cập nhật order status
+13. User review sản phẩm
+14. User comment sản phẩm
+15. Khách gửi feedback
+16. Public xem policies
+17. Public xem store locations/Google Maps URL
+18. Logout user và kiểm tra access token cũ bị blacklist
