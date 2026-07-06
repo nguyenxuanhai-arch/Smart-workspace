@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+/* Ẩn mũi tên mặc định của input number nếu dùng sau này */
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
