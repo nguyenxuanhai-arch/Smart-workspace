@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { Plus, Pencil, Eye, Trash2, Search, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { productsApi } from '../api/products.js'
+import { resolveAssetUrl } from '../api/http.js'
 
 const statusLabel = {
   ACTIVE: 'Hiển thị',
@@ -124,7 +125,7 @@ export default function Products() {
                   <td className="p-4">
                     {p.images?.[0]?.imageUrl ? (
                       <img
-                        src={p.images[0].imageUrl}
+                        src={resolveAssetUrl(p.images[0].imageUrl)}
                         alt={p.name}
                         className="w-10 h-10 rounded-lg object-cover bg-slate-100"
                       />

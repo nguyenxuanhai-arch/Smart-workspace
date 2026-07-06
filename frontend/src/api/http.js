@@ -1,11 +1,36 @@
 import axios from 'axios'
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
+export const API_BASE_URL = normalizeBaseUrl(import.meta.env.VITE_API_BASE_URL || '/api')
+const ASSET_BASE_URL = normalizeBaseUrl(
+  import.meta.env.VITE_ASSET_BASE_URL || inferBackendOrigin(API_BASE_URL)
+)
 
 export const http = axios.create({
-  baseURL: BASE_URL,
+  baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
 })
+
+function normalizeBaseUrl(value) {
+  return String(value || '').replace(/\/+$/, '')
+}
+
+function inferBackendOrigin(apiBaseUrl) {
+  if (!/^https?:\/\//i.test(apiBaseUrl)) return ''
+  try {
+    return new URL(apiBaseUrl).origin
+  } catch {
+    return ''
+  }
+}
+
+export function resolveAssetUrl(path) {
+  if (!path) return ''
+  if (/^(https?:)?\/\//i.test(path) || path.startsWith('data:') || path.startsWith('blob:')) {
+    return path
+  }
+  if (!ASSET_BASE_URL) return path
+  return `${ASSET_BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`
+}
 
 // ---- Token storage helpers ----
 export const tokenStorage = {
@@ -75,7 +100,7 @@ http.interceptors.response.use(
       }
 
       try {
-        const { data } = await axios.post(`${BASE_URL}/auth/refresh`, { refreshToken })
+        const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken })
         const newAccessToken = data.data.accessToken
         const newRefreshToken = data.data.refreshToken
         tokenStorage.setSession({ accessToken: newAccessToken, refreshToken: newRefreshToken })

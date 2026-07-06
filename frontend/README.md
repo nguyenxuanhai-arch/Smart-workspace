@@ -16,6 +16,7 @@ Backend chạy ở `http://localhost:8080`. Cần có sẵn 1 tài khoản có r
 ## 2. Chạy frontend
 
 ```bash
+cd frontend
 npm install
 npm run dev
 ```
@@ -46,3 +47,15 @@ Truy cập `http://localhost:5173`, đăng nhập bằng tài khoản ADMIN.
 
 Khi backend bổ sung các endpoint trên, chỉ cần thêm file mới trong `src/api/` theo đúng pattern các
 file hiện có (`products.js`, `orders.js`,...) rồi nối vào trang tương ứng.
+
+## 5. Build và triển khai
+
+```bash
+cd frontend
+npm ci
+npm run build
+npm run preview
+```
+
+Production nên dùng cùng origin và proxy `/api` + `/uploads` về backend vì backend hiện chưa bật CORS.
+Xem hướng dẫn đầy đủ tại [`docs/deployment.md`](docs/deployment.md).

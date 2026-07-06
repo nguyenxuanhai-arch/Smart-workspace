@@ -4,6 +4,7 @@ import { Plus, Trash2, UploadCloud, Loader2 } from 'lucide-react'
 import { productsApi } from '../api/products.js'
 import { categoriesApi } from '../api/categories.js'
 import { uploadsApi } from '../api/uploads.js'
+import { resolveAssetUrl } from '../api/http.js'
 
 const slugify = (str) =>
   str
@@ -213,7 +214,7 @@ function ProductForm({ categories, editId, onSaved }) {
         <div className="grid grid-cols-4 gap-3">
           {form.imageUrls.map((url) => (
             <div key={url} className="relative aspect-square rounded-lg overflow-hidden bg-slate-100 group">
-              <img src={url} alt="" className="w-full h-full object-cover" />
+              <img src={resolveAssetUrl(url)} alt="" className="w-full h-full object-cover" />
               <button
                 type="button"
                 onClick={() => removeImage(url)}

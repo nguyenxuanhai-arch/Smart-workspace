@@ -2,3 +2,20 @@
 .idea/
 .codegraph/
 .agents/
+
+# Local environment
+.env
+.env.*
+!env.example
+!frontend/.env.example
+
+# Frontend generated files
+frontend/node_modules/
+frontend/dist/
+
+# Backend generated files
+backend/target/
+backend/uploads/
+
+# Logs
+*.log
