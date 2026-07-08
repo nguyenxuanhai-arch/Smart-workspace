@@ -16,17 +16,17 @@ public class AddressRequest {
     @Size(max = 30, message = "Receiver phone must be at most 30 characters")
     private String receiverPhone;
 
-    @NotBlank(message = "Province is required")
-    @Size(max = 100, message = "Province must be at most 100 characters")
-    private String province;
+    @NotBlank(message = "Province name is required")
+    @Size(max = 100, message = "Province name must be at most 100 characters")
+    private String provinceName;
 
-    @NotBlank(message = "District is required")
-    @Size(max = 100, message = "District must be at most 100 characters")
-    private String district;
+    private Integer provinceCode;
 
-    @NotBlank(message = "Ward is required")
-    @Size(max = 100, message = "Ward must be at most 100 characters")
-    private String ward;
+    @NotBlank(message = "Ward name is required")
+    @Size(max = 100, message = "Ward name must be at most 100 characters")
+    private String wardName;
+
+    private Integer wardCode;
 
     @NotBlank(message = "Detail address is required")
     @Size(max = 500, message = "Detail address must be at most 500 characters")

@@ -18,6 +18,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -84,4 +85,7 @@ public class Product {
             inverseJoinColumns = @JoinColumn(name = "promotion_id")
     )
     private Set<Promotion> promotions = new HashSet<>();
+
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
+    private java.util.List<ProductImage> images;
 }

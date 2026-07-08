@@ -39,14 +39,17 @@ public class Address {
     @Column(name = "receiver_phone", nullable = false, length = 30)
     private String receiverPhone;
 
-    @Column(nullable = false, length = 100)
-    private String province;
+    @Column(name = "province_name", nullable = false, length = 100)
+    private String provinceName;
 
-    @Column(nullable = false, length = 100)
-    private String district;
+    @Column(name = "province_code", nullable = false)
+    private Integer provinceCode;
 
-    @Column(nullable = false, length = 100)
-    private String ward;
+    @Column(name = "ward_name", nullable = false, length = 100)
+    private String wardName;
+
+    @Column(name = "ward_code", nullable = false)
+    private Integer wardCode;
 
     @Column(name = "detail_address", nullable = false, length = 500)
     private String detailAddress;

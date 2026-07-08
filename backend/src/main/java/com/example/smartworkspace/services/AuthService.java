@@ -39,6 +39,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -100,21 +101,45 @@ public class AuthService {
 
     @Transactional
     public LoginResponse refresh(RefreshTokenRequest request) {
-        RefreshToken refreshToken = getUsableRefreshToken(request.getRefreshToken());
+        return refresh(request.getRefreshToken());
+    }
+
+    @Transactional
+    public LoginResponse refresh(String rawRefreshToken) {
+        RefreshToken refreshToken = getUsableRefreshToken(rawRefreshToken);
         revokeRefreshToken(refreshToken);
         return buildLoginResponse(new CustomUserDetails(refreshToken.getUser()));
     }
 
     @Transactional
     public void logout(LogoutRequest request, String authorizationHeader) {
-        CustomUserDetails userDetails = getCurrentUserDetails();
-        RefreshToken refreshToken = getUsableRefreshToken(request.getRefreshToken());
-        if (!refreshToken.getUser().getId().equals(userDetails.getUser().getId())) {
-            throw new AppException(ErrorCode.INVALID_REFRESH_TOKEN);
+        logout(request.getRefreshToken(), resolveAccessToken(authorizationHeader));
+    }
+
+    @Transactional
+    public void logout(String rawRefreshToken, String accessToken) {
+        RefreshToken refreshToken = null;
+        if (StringUtils.hasText(rawRefreshToken)) {
+            refreshToken = getUsableRefreshToken(rawRefreshToken);
         }
 
-        revokeRefreshToken(refreshToken);
-        blacklistAccessToken(resolveAccessToken(authorizationHeader));
+        if (refreshToken != null && StringUtils.hasText(accessToken)) {
+            String accessTokenEmail = jwtService.extractUsername(accessToken);
+            if (accessTokenEmail != null && !accessTokenEmail.equals(refreshToken.getUser().getEmail())) {
+                throw new AppException(ErrorCode.INVALID_REFRESH_TOKEN);
+            }
+        }
+
+        if (refreshToken != null) {
+            revokeRefreshToken(refreshToken);
+        }
+
+        if (StringUtils.hasText(accessToken)) {
+            blacklistAccessToken(accessToken);
+        }
+
+        // With HTTP-only cookies, both tokens may be absent (expired cookies).
+        // Logout should succeed gracefully in this case.
     }
 
     @Transactional(readOnly = true)
@@ -155,6 +180,9 @@ public class AuthService {
     }
 
     private RefreshToken getUsableRefreshToken(String rawToken) {
+        if (!StringUtils.hasText(rawToken)) {
+            throw new AppException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
         RefreshToken refreshToken = refreshTokenRepository.findByTokenHashAndRevokedFalse(hashToken(rawToken))
                 .orElseThrow(() -> new AppException(ErrorCode.INVALID_REFRESH_TOKEN));
         if (!refreshToken.getExpiresAt().isAfter(LocalDateTime.now())) {
@@ -170,7 +198,7 @@ public class AuthService {
     }
 
     private void blacklistAccessToken(String accessToken) {
-        if (accessToken == null) {
+        if (!StringUtils.hasText(accessToken)) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 

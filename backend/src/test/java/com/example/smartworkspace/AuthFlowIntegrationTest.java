@@ -19,6 +19,7 @@ import com.example.smartworkspace.repositories.UserRepository;
 import com.example.smartworkspace.securities.JwtService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -34,6 +35,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 class AuthFlowIntegrationTest {
     private static final String PASSWORD = "123456";
+    private static final String AUTH_CONTEXT_HEADER = "X-Auth-Context";
+    private static final String AUTH_CONTEXT = "admin";
+    private static final String ACCESS_COOKIE = "sw_admin_access_token";
+    private static final String REFRESH_COOKIE = "sw_admin_refresh_token";
 
     @Autowired
     private MockMvc mockMvc;
@@ -93,11 +98,14 @@ class AuthFlowIntegrationTest {
                 .andExpect(jsonPath("$.data.expiresIn").isNumber())
                 .andExpect(jsonPath("$.data.user.email").value(email))
                 .andExpect(jsonPath("$.data.user.roles[0]").value("CUSTOMER"))
+                // Response body should NOT contain tokens (they are in cookies)
+                .andExpect(jsonPath("$.data.accessToken").doesNotExist())
+                .andExpect(jsonPath("$.data.refreshToken").doesNotExist())
                 .andReturn();
 
-        JsonNode loginData = responseData(loginResult);
-        String firstAccessToken = loginData.get("accessToken").asText();
-        String firstRefreshToken = loginData.get("refreshToken").asText();
+        // Tokens should be in Set-Cookie headers
+        String firstAccessToken = getCookieValue(loginResult, ACCESS_COOKIE);
+        String firstRefreshToken = getCookieValue(loginResult, REFRESH_COOKIE);
         assertThat(firstAccessToken).isNotBlank();
         assertThat(firstRefreshToken).isNotBlank();
 
@@ -107,21 +115,26 @@ class AuthFlowIntegrationTest {
                 .get()
                 .satisfies(refreshToken -> assertThat(refreshToken.getTokenHash()).isNotEqualTo(firstRefreshToken));
 
+        // /me should work via cookie
         mockMvc.perform(get("/api/auth/me")
-                        .header("Authorization", "Bearer " + firstAccessToken))
+                        .cookie(new Cookie(ACCESS_COOKIE, firstAccessToken))
+                        .header(AUTH_CONTEXT_HEADER, AUTH_CONTEXT))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.email").value(email));
 
+        // Refresh using cookie (no body needed)
         MvcResult refreshResult = mockMvc.perform(post("/api/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(Map.of("refreshToken", firstRefreshToken))))
+                        .cookie(new Cookie(REFRESH_COOKIE, firstRefreshToken))
+                        .header(AUTH_CONTEXT_HEADER, AUTH_CONTEXT))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Refresh token successfully"))
+                // Response body should NOT contain tokens
+                .andExpect(jsonPath("$.data.accessToken").doesNotExist())
+                .andExpect(jsonPath("$.data.refreshToken").doesNotExist())
                 .andReturn();
 
-        JsonNode refreshData = responseData(refreshResult);
-        String secondAccessToken = refreshData.get("accessToken").asText();
-        String secondRefreshToken = refreshData.get("refreshToken").asText();
+        String secondAccessToken = getCookieValue(refreshResult, ACCESS_COOKIE);
+        String secondRefreshToken = getCookieValue(refreshResult, REFRESH_COOKIE);
         assertThat(secondAccessToken).isNotEqualTo(firstAccessToken);
         assertThat(secondRefreshToken).isNotEqualTo(firstRefreshToken);
         assertThat(refreshTokenRepository.findByTokenHashAndRevokedFalse(firstRefreshHash)).isEmpty();
@@ -132,30 +145,37 @@ class AuthFlowIntegrationTest {
                     assertThat(refreshToken.isRevoked()).isTrue();
                 });
 
+        // Reusing revoked refresh token should fail
         mockMvc.perform(post("/api/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(Map.of("refreshToken", firstRefreshToken))))
+                        .cookie(new Cookie(REFRESH_COOKIE, firstRefreshToken))
+                        .header(AUTH_CONTEXT_HEADER, AUTH_CONTEXT))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false));
 
+        // Logout using cookies (no body needed)
         mockMvc.perform(post("/api/auth/logout")
-                        .header("Authorization", "Bearer " + secondAccessToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(Map.of("refreshToken", secondRefreshToken))))
+                        .cookie(
+                                new Cookie(ACCESS_COOKIE, secondAccessToken),
+                                new Cookie(REFRESH_COOKIE, secondRefreshToken)
+                        )
+                        .header(AUTH_CONTEXT_HEADER, AUTH_CONTEXT))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Logout successfully"));
 
         assertThat(refreshTokenRepository.findByTokenHashAndRevokedFalse(hashToken(secondRefreshToken))).isEmpty();
         assertThat(blacklistedTokenRepository.existsByJti(jwtService.extractJti(secondAccessToken))).isTrue();
 
+        // Access token should be blacklisted
         mockMvc.perform(get("/api/auth/me")
-                        .header("Authorization", "Bearer " + secondAccessToken))
+                        .cookie(new Cookie(ACCESS_COOKIE, secondAccessToken))
+                        .header(AUTH_CONTEXT_HEADER, AUTH_CONTEXT))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false));
 
+        // Refresh token should be revoked
         mockMvc.perform(post("/api/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(Map.of("refreshToken", secondRefreshToken))))
+                        .cookie(new Cookie(REFRESH_COOKIE, secondRefreshToken))
+                        .header(AUTH_CONTEXT_HEADER, AUTH_CONTEXT))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false));
     }
@@ -170,6 +190,7 @@ class AuthFlowIntegrationTest {
     private org.springframework.test.web.servlet.ResultActions login(String email, String password) throws Exception {
         return mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
+                .header(AUTH_CONTEXT_HEADER, AUTH_CONTEXT)
                 .content(json(Map.of("email", email, "password", password))));
     }
 
@@ -179,6 +200,12 @@ class AuthFlowIntegrationTest {
 
     private JsonNode responseData(MvcResult result) throws Exception {
         return objectMapper.readTree(result.getResponse().getContentAsByteArray()).get("data");
+    }
+
+    private String getCookieValue(MvcResult result, String cookieName) {
+        Cookie cookie = result.getResponse().getCookie(cookieName);
+        assertThat(cookie).as("Cookie '%s' should be set", cookieName).isNotNull();
+        return cookie.getValue();
     }
 
     private String hashToken(String rawToken) {

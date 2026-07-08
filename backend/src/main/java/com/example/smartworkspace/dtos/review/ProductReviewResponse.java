@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 public class ProductReviewResponse {
     private Long id;
     private Long productId;
+    private String productName;
     private Long userId;
     private String userFullName;
     private Integer rating;

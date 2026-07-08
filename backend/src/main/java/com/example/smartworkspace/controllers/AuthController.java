@@ -4,11 +4,12 @@ import com.example.smartworkspace.commons.ApiResponse;
 import com.example.smartworkspace.dtos.auth.AuthUserResponse;
 import com.example.smartworkspace.dtos.auth.LoginRequest;
 import com.example.smartworkspace.dtos.auth.LoginResponse;
-import com.example.smartworkspace.dtos.auth.LogoutRequest;
-import com.example.smartworkspace.dtos.auth.RefreshTokenRequest;
 import com.example.smartworkspace.dtos.auth.RegisterRequest;
 import com.example.smartworkspace.dtos.auth.RegisterResponse;
+import com.example.smartworkspace.securities.AuthCookieService;
 import com.example.smartworkspace.services.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
+    private final AuthCookieService authCookieService;
 
     @PostMapping("/register")
     public ApiResponse<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -30,21 +32,38 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ApiResponse<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ApiResponse.success("Login successfully", authService.login(request));
+    public ApiResponse<LoginResponse> login(
+            @Valid @RequestBody LoginRequest request,
+            @RequestHeader(value = AuthCookieService.AUTH_CONTEXT_HEADER, required = false) String authContext,
+            HttpServletResponse response
+    ) {
+        LoginResponse loginResponse = authService.login(request);
+        authCookieService.addAuthCookies(response, authContext, loginResponse);
+        return ApiResponse.success("Login successfully", authCookieService.withoutTokenPayload(loginResponse));
     }
 
     @PostMapping("/refresh")
-    public ApiResponse<LoginResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
-        return ApiResponse.success("Refresh token successfully", authService.refresh(request));
+    public ApiResponse<LoginResponse> refresh(
+            @RequestHeader(value = AuthCookieService.AUTH_CONTEXT_HEADER, required = false) String authContext,
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
+        String rawRefreshToken = authCookieService.resolveRefreshToken(request);
+        LoginResponse loginResponse = authService.refresh(rawRefreshToken);
+        authCookieService.addAuthCookies(response, authContext, loginResponse);
+        return ApiResponse.success("Refresh token successfully", authCookieService.withoutTokenPayload(loginResponse));
     }
 
     @PostMapping("/logout")
     public ApiResponse<Void> logout(
-            @Valid @RequestBody LogoutRequest request,
-            @RequestHeader(value = "Authorization", required = false) String authorizationHeader
+            @RequestHeader(value = AuthCookieService.AUTH_CONTEXT_HEADER, required = false) String authContext,
+            HttpServletRequest request,
+            HttpServletResponse response
     ) {
-        authService.logout(request, authorizationHeader);
+        String rawRefreshToken = authCookieService.resolveRefreshToken(request);
+        String accessToken = authCookieService.resolveAccessToken(request);
+        authService.logout(rawRefreshToken, accessToken);
+        authCookieService.clearAuthCookies(response, authContext);
         return ApiResponse.success("Logout successfully", null);
     }
 

@@ -85,6 +85,8 @@ Query cho `GET /api/products`:
 - `size`
 
 API admin:
+- `GET /api/admin/products`
+- `GET /api/admin/products/{id}`
 - `POST /api/admin/products`
 - `PUT /api/admin/products/{id}`
 - `DELETE /api/admin/products/{id}`
@@ -92,6 +94,10 @@ API admin:
 - `POST /api/admin/categories`
 - `PUT /api/admin/categories/{id}`
 - `DELETE /api/admin/categories/{id}`
+
+`GET /api/admin/products` dùng cùng query với `GET /api/products` nhưng không lọc theo status sản phẩm,
+giúp admin xem cả `ACTIVE`, `INACTIVE`, `OUT_OF_STOCK`. Khi gọi trần `/api/admin/products`, backend dùng
+`size=100`; nếu cần nhiều hơn, truyền `page`/`size` rõ ràng.
 
 Ghi chú ảnh sản phẩm:
 - Product API vẫn lưu ảnh bằng trường `imageUrls`.

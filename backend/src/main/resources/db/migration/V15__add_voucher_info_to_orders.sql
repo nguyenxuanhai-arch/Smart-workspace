@@ -1,0 +1,2 @@
+ALTER TABLE orders ADD COLUMN voucher_type VARCHAR(50) NULL;
+ALTER TABLE orders ADD COLUMN voucher_value DECIMAL(15,2) NULL;

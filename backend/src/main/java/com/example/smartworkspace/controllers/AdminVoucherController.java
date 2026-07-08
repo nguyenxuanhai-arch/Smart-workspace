@@ -1,0 +1,60 @@
+package com.example.smartworkspace.controllers;
+
+import com.example.smartworkspace.commons.ApiResponse;
+import com.example.smartworkspace.commons.PageResponse;
+import com.example.smartworkspace.dtos.voucher.VoucherRequest;
+import com.example.smartworkspace.dtos.voucher.VoucherResponse;
+import com.example.smartworkspace.enums.CommonStatus;
+import com.example.smartworkspace.services.VoucherService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/admin/vouchers")
+@RequiredArgsConstructor
+public class AdminVoucherController {
+    private final VoucherService voucherService;
+
+    @GetMapping
+    public ApiResponse<PageResponse<VoucherResponse>> getVouchers(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) CommonStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ApiResponse.success(voucherService.getVouchers(search, status, page, size));
+    }
+
+    @GetMapping("/{id}")
+    public ApiResponse<VoucherResponse> getVoucher(@PathVariable Long id) {
+        return ApiResponse.success(voucherService.getVoucher(id));
+    }
+
+    @PostMapping
+    public ApiResponse<VoucherResponse> createVoucher(@Valid @RequestBody VoucherRequest request) {
+        return ApiResponse.success("Create voucher successfully", voucherService.createVoucher(request));
+    }
+
+    @PutMapping("/{id}")
+    public ApiResponse<VoucherResponse> updateVoucher(
+            @PathVariable Long id,
+            @Valid @RequestBody VoucherRequest request
+    ) {
+        return ApiResponse.success("Update voucher successfully", voucherService.updateVoucher(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> deleteVoucher(@PathVariable Long id) {
+        voucherService.deleteVoucher(id);
+        return ApiResponse.success("Delete voucher successfully");
+    }
+}

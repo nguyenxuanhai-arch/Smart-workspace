@@ -10,6 +10,7 @@ public class ProductReviewMapper {
         return ProductReviewResponse.builder()
                 .id(review.getId())
                 .productId(review.getProduct().getId())
+                .productName(review.getProduct().getName())
                 .userId(review.getUser().getId())
                 .userFullName(review.getUser().getFullName())
                 .rating(review.getRating())

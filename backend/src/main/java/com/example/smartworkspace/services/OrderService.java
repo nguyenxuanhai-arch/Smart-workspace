@@ -63,6 +63,7 @@ public class OrderService {
     private final PaymentRepository paymentRepository;
     private final ShipmentRepository shipmentRepository;
     private final UserRepository userRepository;
+    private final com.example.smartworkspace.repositories.VoucherRepository voucherRepository;
     private final OrderMapper orderMapper;
 
     @Transactional
@@ -78,9 +79,57 @@ public class OrderService {
         }
 
         BigDecimal subtotalAmount = calculateSubtotal(cartItems);
-        BigDecimal shippingFee = calculateShippingFee(subtotalAmount);
-        BigDecimal discountAmount = calculateDiscountAmount(subtotalAmount);
-        BigDecimal totalAmount = subtotalAmount.add(shippingFee).subtract(discountAmount);
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        String voucherCodeToSave = null;
+        com.example.smartworkspace.enums.DiscountType voucherTypeToSave = null;
+        BigDecimal voucherValueToSave = null;
+        
+        if (request.getVoucherCode() != null && !request.getVoucherCode().isBlank()) {
+            String code = request.getVoucherCode().trim().toUpperCase();
+            com.example.smartworkspace.entities.Voucher voucher = voucherRepository.findByCodeForUpdate(code)
+                    .orElseThrow(() -> new AppException(ErrorCode.INVALID_REQUEST, "Mã giảm giá không hợp lệ"));
+            
+            if (voucher.getStatus() != com.example.smartworkspace.enums.CommonStatus.ACTIVE) {
+                throw new AppException(ErrorCode.INVALID_REQUEST, "Mã giảm giá không hoạt động");
+            }
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+            if (now.isBefore(voucher.getStartDate()) || now.isAfter(voucher.getEndDate())) {
+                throw new AppException(ErrorCode.INVALID_REQUEST, "Mã giảm giá đã hết hạn hoặc chưa bắt đầu");
+            }
+            if (voucher.getUsageLimit() != null && voucher.getUsedCount() >= voucher.getUsageLimit()) {
+                throw new AppException(ErrorCode.INVALID_REQUEST, "Mã giảm giá đã hết lượt sử dụng chung");
+            }
+            if (subtotalAmount.compareTo(voucher.getMinOrderAmount()) < 0) {
+                throw new AppException(ErrorCode.INVALID_REQUEST, "Đơn hàng chưa đạt giá trị tối thiểu để áp dụng mã này");
+            }
+            if (orderRepository.countByUserIdAndVoucherCodeAndStatusNot(userId, code, OrderStatus.CANCELLED) > 0) {
+                throw new AppException(ErrorCode.INVALID_REQUEST, "Bạn đã sử dụng hết lượt của voucher này");
+            }
+            
+            if (voucher.getDiscountType() == com.example.smartworkspace.enums.DiscountType.PERCENT) {
+                discountAmount = subtotalAmount.multiply(voucher.getDiscountValue()).divide(BigDecimal.valueOf(100), 0, java.math.RoundingMode.DOWN);
+            } else {
+                discountAmount = voucher.getDiscountValue();
+            }
+            
+            if (discountAmount.compareTo(subtotalAmount) > 0) {
+                discountAmount = subtotalAmount;
+            }
+            
+            voucher.setUsedCount(voucher.getUsedCount() + 1);
+            voucherRepository.save(voucher);
+            voucherCodeToSave = code;
+            voucherTypeToSave = voucher.getDiscountType();
+            voucherValueToSave = voucher.getDiscountValue();
+        }
+
+        BigDecimal amountAfterDiscount = subtotalAmount.subtract(discountAmount);
+        BigDecimal shippingFee = calculateShippingFee(amountAfterDiscount, request.getShippingMethod());
+        BigDecimal totalAmount = amountAfterDiscount.add(shippingFee);
+
+        if (totalAmount.signum() < 0) {
+            throw new IllegalStateException("Order total cannot be negative");
+        }
 
         Order order = new Order();
         order.setUser(user);
@@ -88,10 +137,14 @@ public class OrderService {
         order.setReceiverName(trim(request.getReceiverName()));
         order.setReceiverPhone(trim(request.getReceiverPhone()));
         order.setShippingAddress(trim(request.getShippingAddress()));
+        order.setShippingMethod(request.getShippingMethod());
+        order.setVoucherCode(voucherCodeToSave);
+        order.setVoucherType(voucherTypeToSave);
+        order.setVoucherValue(voucherValueToSave);
         order.setSubtotalAmount(subtotalAmount);
         order.setShippingFee(shippingFee);
         order.setDiscountAmount(discountAmount);
-        order.setTotalAmount(totalAmount.max(BigDecimal.ZERO));
+        order.setTotalAmount(totalAmount);
         order.setStatus(OrderStatus.PENDING);
         order.setNote(trim(request.getNote()));
         Order savedOrder = orderRepository.save(order);
@@ -146,6 +199,18 @@ public class OrderService {
     public OrderResponse updateOrderStatus(Long id, OrderStatusUpdateRequest request) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+                
+        if (request.getStatus() == OrderStatus.CANCELLED && order.getStatus() != OrderStatus.CANCELLED) {
+            if (order.getVoucherCode() != null) {
+                voucherRepository.findByCodeForUpdate(order.getVoucherCode()).ifPresent(voucher -> {
+                    if (voucher.getUsedCount() > 0) {
+                        voucher.setUsedCount(voucher.getUsedCount() - 1);
+                        voucherRepository.save(voucher);
+                    }
+                });
+            }
+        }
+        
         order.setStatus(request.getStatus());
         return toResponse(orderRepository.save(order));
     }
@@ -223,12 +288,11 @@ public class OrderService {
         return cartItem.getUnitPrice() == null ? cartItem.getProduct().getPrice() : cartItem.getUnitPrice();
     }
 
-    private BigDecimal calculateShippingFee(BigDecimal subtotalAmount) {
-        return subtotalAmount.compareTo(FREE_SHIPPING_THRESHOLD) >= 0 ? BigDecimal.ZERO : SHIPPING_FEE;
-    }
-
-    private BigDecimal calculateDiscountAmount(BigDecimal subtotalAmount) {
-        return subtotalAmount.compareTo(DISCOUNT_THRESHOLD) >= 0 ? DISCOUNT_AMOUNT : BigDecimal.ZERO;
+    private BigDecimal calculateShippingFee(BigDecimal amountAfterDiscount, com.example.smartworkspace.enums.ShippingMethod shippingMethod) {
+        if (shippingMethod == com.example.smartworkspace.enums.ShippingMethod.INSTALLATION) {
+            return BigDecimal.valueOf(150000);
+        }
+        return amountAfterDiscount.compareTo(FREE_SHIPPING_THRESHOLD) >= 0 ? BigDecimal.ZERO : SHIPPING_FEE;
     }
 
     private String generateOrderCode(Long userId) {

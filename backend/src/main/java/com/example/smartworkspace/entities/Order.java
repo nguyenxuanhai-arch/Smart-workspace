@@ -63,11 +63,25 @@ public class Order {
     private BigDecimal totalAmount = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "shipping_method", nullable = false, length = 50)
+    private com.example.smartworkspace.enums.ShippingMethod shippingMethod = com.example.smartworkspace.enums.ShippingMethod.STANDARD;
+
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     private OrderStatus status = OrderStatus.PENDING;
 
     @Column(length = 500)
     private String note;
+
+    @Column(name = "voucher_code", length = 80)
+    private String voucherCode;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "voucher_type", length = 50)
+    private com.example.smartworkspace.enums.DiscountType voucherType;
+
+    @Column(name = "voucher_value", precision = 15, scale = 2)
+    private BigDecimal voucherValue;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "DATETIME")

@@ -15,9 +15,10 @@ public class AddressResponse {
     private Long id;
     private String receiverName;
     private String receiverPhone;
-    private String province;
-    private String district;
-    private String ward;
+    private String provinceName;
+    private Integer provinceCode;
+    private String wardName;
+    private Integer wardCode;
     private String detailAddress;
     private Boolean isDefault;
     private LocalDateTime createdAt;

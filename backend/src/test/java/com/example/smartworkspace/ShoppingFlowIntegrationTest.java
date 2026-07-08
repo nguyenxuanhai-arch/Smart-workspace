@@ -135,6 +135,7 @@ class ShoppingFlowIntegrationTest {
                                 "receiverPhone", "0909000000",
                                 "shippingAddress", "123 Nguyen Trai, Quan 1, TP.HCM",
                                 "paymentMethod", "COD",
+                                "shippingMethod", "STANDARD",
                                 "note", "Giao gio hanh chinh"
                         ))))
                 .andExpect(status().isOk())
