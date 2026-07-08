@@ -27,6 +27,8 @@ public class OrderResponse {
     private String shippingAddress;
     private BigDecimal subtotalAmount;
     private BigDecimal shippingFee;
+    private com.example.smartworkspace.enums.ShippingMethod shippingMethod;
+    private String voucherCode;
     private BigDecimal discountAmount;
     private BigDecimal totalAmount;
     private OrderStatus status;

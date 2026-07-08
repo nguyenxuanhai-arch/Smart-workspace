@@ -11,18 +11,33 @@ export default function PayOSReturnPage() {
   const [orderCode, setOrderCode] = useState('')
 
   useEffect(() => {
-    const code = searchParams.get('code')
-    const id = searchParams.get('id')
-    const cancel = searchParams.get('cancel')
-    const statusParam = searchParams.get('status')
     const orderCodeParam = searchParams.get('orderCode')
 
     setOrderCode(orderCodeParam || '')
 
-    if (cancel === 'true' || statusParam === 'CANCELLED') {
-      setStatus('cancelled')
-    } else if (code === '00' && statusParam === 'PAID') {
-      setStatus('success')
+    if (orderCodeParam) {
+      import('../api/payments.js')
+        .then(module => module.paymentsApi.syncPayosPayment(orderCodeParam))
+        .then(status => {
+          switch (status) {
+            case 'PAID':
+              setStatus('success')
+              break
+            case 'CANCELLED':
+              setStatus('cancelled')
+              break
+            case 'PENDING':
+            case 'PROCESSING':
+              setStatus('processing') // Or maybe a specific pending state
+              break
+            default:
+              setStatus('error')
+          }
+        })
+        .catch(err => {
+          console.error('Failed to sync payment', err)
+          setStatus('error')
+        })
     } else {
       setStatus('error')
     }
@@ -47,10 +62,10 @@ export default function PayOSReturnPage() {
               Mã đơn hàng của bạn là <strong>#{orderCode}</strong>
             </p>
             <button
-              onClick={() => navigate(CLIENT_ROUTES.accountOrderHistory)}
+              onClick={() => navigate(CLIENT_ROUTES.accountPayments)}
               className="mt-8 rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-on-primary transition hover:bg-primary/90"
             >
-              Xem đơn hàng
+              Lịch sử giao dịch
             </button>
           </div>
         )}
@@ -64,10 +79,10 @@ export default function PayOSReturnPage() {
             </p>
             <div className="mt-8 flex gap-4">
               <button
-                onClick={() => navigate(CLIENT_ROUTES.accountOrderHistory)}
+                onClick={() => navigate(CLIENT_ROUTES.accountPayments)}
                 className="rounded-full border border-outline px-6 py-2.5 text-sm font-semibold text-on-surface transition hover:bg-surface-container"
               >
-                Quản lý đơn hàng
+                Quản lý giao dịch
               </button>
               <button
                 onClick={() => navigate(CLIENT_ROUTES.home)}
@@ -88,10 +103,10 @@ export default function PayOSReturnPage() {
             </p>
             <div className="mt-8 flex gap-4">
               <button
-                onClick={() => navigate(CLIENT_ROUTES.accountOrderHistory)}
+                onClick={() => navigate(CLIENT_ROUTES.accountPayments)}
                 className="rounded-full border border-outline px-6 py-2.5 text-sm font-semibold text-on-surface transition hover:bg-surface-container"
               >
-                Quản lý đơn hàng
+                Quản lý giao dịch
               </button>
               <button
                 onClick={() => navigate(CLIENT_ROUTES.home)}

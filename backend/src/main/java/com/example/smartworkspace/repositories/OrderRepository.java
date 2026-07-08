@@ -16,6 +16,8 @@ import org.springframework.data.repository.query.Param;
 public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findByUserIdOrderByCreatedAtDesc(Long userId);
 
+    long countByUserIdAndVoucherCodeAndStatusNot(Long userId, String voucherCode, OrderStatus status);
+
     Optional<Order> findByIdAndUserId(Long id, Long userId);
 
     Page<Order> findAllByOrderByCreatedAtDesc(Pageable pageable);

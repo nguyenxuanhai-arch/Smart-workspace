@@ -13,6 +13,12 @@ public interface VoucherRepository extends JpaRepository<Voucher, Long> {
 
     boolean existsByCodeAndIdNot(String code, Long id);
 
+    java.util.Optional<Voucher> findByCode(String code);
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT v FROM Voucher v WHERE v.code = :code")
+    java.util.Optional<Voucher> findByCodeForUpdate(@Param("code") String code);
+
     @Query("""
             select v from Voucher v
             where (:status is null or v.status = :status)

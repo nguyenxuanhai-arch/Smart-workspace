@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 import ClientLayout from '../components/layout/ClientLayout.jsx'
 import { CLIENT_ROUTES } from '../routes.js'
-import { getCartItems } from '../utils/cartStorage.js'
+
 import { formatCurrency } from '../utils/formatters.js'
 
 const checkoutItems = [
@@ -38,22 +38,7 @@ const checkoutItems = [
   },
 ]
 
-const shippingOptions = [
-  {
-    id: 'standard',
-    title: 'Giao tiêu chuẩn',
-    description: 'Nhận hàng trong 3-5 ngày làm việc',
-    price: 0,
-    Icon: Truck,
-  },
-  {
-    id: 'install',
-    title: 'Giao và lắp đặt ưu tiên',
-    description: 'Lắp đặt trong 24-48 giờ tại nội thành',
-    price: 150000,
-    Icon: PackageCheck,
-  },
-]
+
 
 const paymentMethods = [
   {
@@ -177,15 +162,83 @@ import { locationsApi } from '../api/locationsApi.js'
 import { ordersApi } from '../api/orders.js'
 import { usersApi } from '../api/users.js'
 import { paymentsApi } from '../api/payments.js'
-import { Loader2 } from 'lucide-react'
+import { vouchersApi } from '../api/vouchers.js'
+import { Loader2, X } from 'lucide-react'
 import SearchableSelectField from '../components/SearchableSelectField.jsx'
 
 export default function Checkout() {
-  const [shippingId, setShippingId] = useState('standard')
+  const [shippingId, setShippingId] = useState('STANDARD')
   const [paymentId, setPaymentId] = useState('cod')
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  
+  const [voucherCodeInput, setVoucherCodeInput] = useState('')
+  const [appliedVoucher, setAppliedVoucher] = useState(null)
+  const [voucherError, setVoucherError] = useState('')
+  const [applyingVoucher, setApplyingVoucher] = useState(false)
+  
   const { items, subtotal, clear } = useCart()
+
+  const handleApplyVoucher = async () => {
+    if (!voucherCodeInput.trim()) return
+    try {
+      setVoucherError('')
+      setApplyingVoucher(true)
+      const res = await vouchersApi.check(voucherCodeInput, subtotal)
+      setAppliedVoucher(res.data)
+    } catch (err) {
+      setVoucherError(err.response?.data?.message || 'Mã giảm giá không hợp lệ')
+      setAppliedVoucher(null)
+    } finally {
+      setApplyingVoucher(false)
+    }
+  }
+
+  const handleRemoveVoucher = () => {
+    setAppliedVoucher(null)
+    setVoucherCodeInput('')
+    setVoucherError('')
+  }
+
+  useEffect(() => {
+    if (appliedVoucher?.code) {
+      const revalidate = async () => {
+        try {
+          const res = await vouchersApi.check(appliedVoucher.code, subtotal)
+          setAppliedVoucher(res.data)
+          setVoucherError('')
+        } catch (err) {
+          setVoucherError(err.response?.data?.message || 'Mã giảm giá không còn hợp lệ')
+          setAppliedVoucher(null)
+          setVoucherCodeInput('')
+        }
+      }
+      
+      const timer = setTimeout(revalidate, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [items, subtotal])
+
+  const discountAmount = appliedVoucher?.discountAmount || 0
+
+  const amountAfterDiscount = subtotal - discountAmount
+
+  const shippingOptions = useMemo(() => [
+    {
+      id: 'STANDARD',
+      title: 'Giao tiêu chuẩn',
+      description: 'Nhận hàng trong 3-5 ngày làm việc',
+      price: amountAfterDiscount >= 2000000 ? 0 : 30000,
+      Icon: Truck,
+    },
+    {
+      id: 'INSTALLATION',
+      title: 'Giao và lắp đặt ưu tiên',
+      description: 'Lắp đặt trong 24-48 giờ tại nội thành',
+      price: 150000,
+      Icon: PackageCheck,
+    },
+  ], [amountAfterDiscount])
 
   const [defaultAddress, setDefaultAddress] = useState({
     receiverName: '',
@@ -241,7 +294,7 @@ export default function Checkout() {
   }, [])
   
   const selectedShipping = shippingOptions.find((option) => option.id === shippingId) || shippingOptions[0]
-  const total = subtotal + selectedShipping.price
+  const total = amountAfterDiscount + selectedShipping.price
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -257,8 +310,10 @@ export default function Checkout() {
       receiverName: formData.get('name'),
       receiverPhone: formData.get('phone'),
       shippingAddress: fullAddress,
+      shippingMethod: shippingId,
       paymentMethod: paymentId.toUpperCase(),
       note: formData.get('note'),
+      voucherCode: appliedVoucher ? appliedVoucher.code : null,
     }
 
     try {
@@ -414,17 +469,30 @@ export default function Checkout() {
                   <input
                     id="checkout-voucher"
                     type="text"
-                    placeholder="SMART2026"
-                    className="min-w-0 flex-1 rounded-lg border border-border-subtle bg-surface px-3 py-2 text-sm outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
+                    value={voucherCodeInput}
+                    onChange={(e) => setVoucherCodeInput(e.target.value)}
+                    disabled={appliedVoucher !== null || applyingVoucher}
+                    placeholder="Nhập mã giảm giá..."
+                    className="min-w-0 flex-1 rounded-lg border border-border-subtle bg-surface px-3 py-2 text-sm outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 disabled:opacity-60 disabled:cursor-not-allowed"
                   />
-                  <button type="button" className="rounded-lg bg-primary px-4 py-2 font-mono text-xs font-semibold text-on-primary transition hover:opacity-90">
-                    Áp dụng
-                  </button>
+                  {appliedVoucher ? (
+                    <button type="button" onClick={handleRemoveVoucher} className="flex items-center gap-1 rounded-lg bg-red-50 px-4 py-2 font-mono text-xs font-semibold text-red-600 transition hover:bg-red-100">
+                      <X size={14} /> Xóa mã
+                    </button>
+                  ) : (
+                    <button type="button" onClick={handleApplyVoucher} disabled={!voucherCodeInput.trim() || applyingVoucher} className="flex items-center gap-1 rounded-lg bg-primary px-4 py-2 font-mono text-xs font-semibold text-on-primary transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60">
+                      {applyingVoucher && <Loader2 size={14} className="animate-spin" />}
+                      Áp dụng
+                    </button>
+                  )}
                 </div>
+                {voucherError && <p className="mt-2 text-xs text-red-500">{voucherError}</p>}
+                {appliedVoucher && <p className="mt-2 text-xs text-emerald-600">Đã áp dụng mã <strong>{appliedVoucher.code}</strong></p>}
               </div>
 
               <div className="space-y-4 border-t border-border-subtle pt-6">
                 <SummaryLine label="Tạm tính" value={formatCurrency(subtotal)} />
+                {discountAmount > 0 && <SummaryLine label="Giảm giá" value={`-${formatCurrency(discountAmount)}`} />}
                 <SummaryLine label="Phí vận chuyển" value={selectedShipping.price === 0 ? 'Miễn phí' : formatCurrency(selectedShipping.price)} />
                 <SummaryLine label="Thuế VAT" value="Đã bao gồm" />
                 <div className="border-t border-border-subtle pt-5">

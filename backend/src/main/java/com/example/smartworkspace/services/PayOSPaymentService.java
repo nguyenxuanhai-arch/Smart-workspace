@@ -60,7 +60,7 @@ public class PayOSPaymentService {
             );
         }
 
-        long providerOrderCode = order.getId();
+        long providerOrderCode = (System.currentTimeMillis() / 1000 % 1000000) * 1000 + (order.getId() % 1000);
         long amount = order.getTotalAmount().longValueExact();
         long expiredAt = Instant.now().plusSeconds(15 * 60).getEpochSecond();
 
@@ -99,10 +99,59 @@ public class PayOSPaymentService {
         }
     }
 
+    @Transactional
+    public String syncPayment(Long orderCode, Long currentUserId) {
+        try {
+            vn.payos.model.v2.paymentRequests.PaymentLink paymentData = payOS.paymentRequests().get(orderCode);
+            
+            Payment payment = paymentRepository.findByProviderOrderCodeForUpdate(orderCode)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thanh toán với orderCode: " + orderCode));
+            
+            if (!payment.getOrder().getUser().getId().equals(currentUserId)) {
+                throw new RuntimeException("Không có quyền truy cập đơn hàng này");
+            }
+
+            long expectedAmount = payment.getOrder().getTotalAmount().longValueExact();
+            if (expectedAmount != paymentData.getAmount()) {
+                throw new RuntimeException("Sai số tiền thanh toán: expected=" + expectedAmount + ", actual=" + paymentData.getAmount());
+            }
+
+            if (vn.payos.model.v2.paymentRequests.PaymentLinkStatus.PAID.equals(paymentData.getStatus())) {
+                if (payment.getPaymentStatus() != PaymentStatus.PAID) {
+                    payment.setPaymentStatus(PaymentStatus.PAID);
+                    payment.setPaidAt(java.time.LocalDateTime.now());
+                    payment.setTransactionCode(paymentData.getId());
+                    paymentRepository.save(payment);
+
+                    Order order = payment.getOrder();
+                    if (order.getStatus() == OrderStatus.PENDING) {
+                        order.setStatus(OrderStatus.CONFIRMED);
+                        orderRepository.save(order);
+                    }
+                }
+            } else if (vn.payos.model.v2.paymentRequests.PaymentLinkStatus.CANCELLED.equals(paymentData.getStatus())) {
+                if (payment.getPaymentStatus() != PaymentStatus.CANCELLED && payment.getPaymentStatus() != PaymentStatus.PAID) {
+                    payment.setPaymentStatus(PaymentStatus.CANCELLED);
+                    paymentRepository.save(payment);
+
+                    Order order = payment.getOrder();
+                    if (order.getStatus() == OrderStatus.PENDING) {
+                        order.setStatus(OrderStatus.CANCELLED);
+                        orderRepository.save(order);
+                    }
+                }
+            }
+            
+            return paymentData.getStatus().getValue();
+        } catch (Exception ex) {
+            throw new RuntimeException("Lỗi khi đồng bộ thanh toán từ PayOS", ex);
+        }
+    }
+
     private String buildPayOSDescription(long orderCode) {
-        String description = "SW" + Long.toString(orderCode, 36).toUpperCase();
-        if (description.length() > 9) {
-            throw new IllegalArgumentException("Mô tả payOS vượt quá 9 ký tự");
+        String description = "DH" + orderCode;
+        if (description.length() > 25) {
+            description = description.substring(0, 25);
         }
         return description;
     }

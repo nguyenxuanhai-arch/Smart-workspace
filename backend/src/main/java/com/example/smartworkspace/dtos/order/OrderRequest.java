@@ -22,8 +22,14 @@ public class OrderRequest {
     @Size(max = 500, message = "Shipping address must be at most 500 characters")
     private String shippingAddress;
 
+    @NotNull(message = "Shipping method is required")
+    private com.example.smartworkspace.enums.ShippingMethod shippingMethod;
+
     @NotNull(message = "Payment method is required")
     private PaymentMethod paymentMethod;
+
+    @Size(max = 80, message = "Voucher code must be at most 80 characters")
+    private String voucherCode;
 
     @Size(max = 500, message = "Note must be at most 500 characters")
     private String note;

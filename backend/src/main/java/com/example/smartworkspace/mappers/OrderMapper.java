@@ -32,6 +32,8 @@ public class OrderMapper {
                 .receiverName(order.getReceiverName())
                 .receiverPhone(order.getReceiverPhone())
                 .shippingAddress(order.getShippingAddress())
+                .shippingMethod(order.getShippingMethod())
+                .voucherCode(order.getVoucherCode())
                 .subtotalAmount(order.getSubtotalAmount())
                 .shippingFee(order.getShippingFee())
                 .discountAmount(order.getDiscountAmount())

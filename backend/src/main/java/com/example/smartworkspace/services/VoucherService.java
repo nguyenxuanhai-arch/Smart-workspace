@@ -79,6 +79,56 @@ public class VoucherService {
         voucher.setStatus(request.getStatus());
     }
 
+    @Transactional(readOnly = true)
+    public com.example.smartworkspace.dtos.voucher.VoucherCheckResponse validateVoucher(String code, java.math.BigDecimal subtotal) {
+        String normalizedCode = normalizeCode(code);
+        if (normalizedCode == null) {
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Mã giảm giá không hợp lệ");
+        }
+        Voucher voucher = voucherRepository.findByCode(normalizedCode)
+                .orElseThrow(() -> new AppException(ErrorCode.INVALID_REQUEST, "Mã giảm giá không tồn tại"));
+
+        if (voucher.getStatus() != CommonStatus.ACTIVE) {
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Mã giảm giá không hoạt động");
+        }
+        
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        if (now.isBefore(voucher.getStartDate()) || now.isAfter(voucher.getEndDate())) {
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Mã giảm giá đã hết hạn hoặc chưa bắt đầu");
+        }
+
+        if (voucher.getUsageLimit() != null && voucher.getUsedCount() >= voucher.getUsageLimit()) {
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Mã giảm giá đã hết lượt sử dụng chung");
+        }
+
+        if (subtotal != null && subtotal.compareTo(voucher.getMinOrderAmount()) < 0) {
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Đơn hàng chưa đạt giá trị tối thiểu để áp dụng mã này");
+        }
+
+        java.math.BigDecimal discountAmount;
+        if (voucher.getDiscountType() == com.example.smartworkspace.enums.DiscountType.PERCENT) {
+            discountAmount = subtotal.multiply(voucher.getDiscountValue()).divide(java.math.BigDecimal.valueOf(100), 0, java.math.RoundingMode.DOWN);
+        } else {
+            discountAmount = voucher.getDiscountValue();
+        }
+
+        if (discountAmount.compareTo(subtotal) > 0) {
+            discountAmount = subtotal;
+        }
+        
+        java.math.BigDecimal amountAfterDiscount = subtotal.subtract(discountAmount);
+
+        return com.example.smartworkspace.dtos.voucher.VoucherCheckResponse.builder()
+                .valid(true)
+                .voucherCode(voucher.getCode())
+                .discountType(voucher.getDiscountType())
+                .discountValue(voucher.getDiscountValue())
+                .discountAmount(discountAmount)
+                .amountAfterDiscount(amountAfterDiscount)
+                .message("Áp dụng mã giảm giá thành công")
+                .build();
+    }
+
     private String normalizeCode(String code) {
         return trim(code).toUpperCase();
     }

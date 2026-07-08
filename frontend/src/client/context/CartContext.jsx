@@ -1,9 +1,33 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react'
 import { useClientAuth } from './AuthContext.jsx'
-import { getCartItems, saveCartItems, clearCart } from '../utils/cartStorage.js'
 import { cartApi } from '../api/cart.js'
 
+const CART_STORAGE_KEY = 'sw_client_cart'
+
 const CartContext = createContext()
+
+function getLocalCart() {
+  if (typeof window === 'undefined') return []
+  const raw = window.localStorage.getItem(CART_STORAGE_KEY)
+  if (!raw) return []
+  try {
+    return JSON.parse(raw)
+  } catch {
+    return []
+  }
+}
+
+function saveLocalCart(items) {
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items))
+  }
+}
+
+function clearLocalCart() {
+  if (typeof window !== 'undefined') {
+    window.localStorage.removeItem(CART_STORAGE_KEY)
+  }
+}
 
 export function CartProvider({ children }) {
   const { isAuthenticated } = useClientAuth()
@@ -15,7 +39,7 @@ export function CartProvider({ children }) {
     if (isAuthenticated === undefined) return // still loading auth
 
     if (!isAuthenticated) {
-      setItems(getCartItems())
+      setItems(getLocalCart())
       setLoading(false)
     } else {
       syncAndLoadCart()
@@ -25,14 +49,10 @@ export function CartProvider({ children }) {
   const syncAndLoadCart = async () => {
     setLoading(true)
     try {
-      // 1. Check if there are items in localStorage to sync
-      const localItems = getCartItems()
+      // 1. Sync local items to backend
+      const localItems = getLocalCart()
       if (localItems.length > 0) {
-        // Sync each item to backend
-        // Note: Backend might group same productId, we just push them sequentially
         for (const item of localItems) {
-          // If productId is not a number, it might be a mock data. We try to sync only if it has a numeric or valid DB id.
-          // Wait, local item has `productId: product.id` if added recently.
           if (item.dbId || typeof item.productId === 'number' || !isNaN(Number(item.productId))) {
              await cartApi.addItem({
                productId: item.dbId || Number(item.productId),
@@ -40,20 +60,20 @@ export function CartProvider({ children }) {
              }).catch(console.error)
           }
         }
-        clearCart()
+        clearLocalCart()
       }
 
       // 2. Fetch fresh cart from backend
       const res = await cartApi.getMyCart()
-      // Map API response to frontend format
+      
       const mappedItems = res.items.map(apiItem => ({
-        id: apiItem.id, // This is cartItemId
+        id: apiItem.id, // Cart item ID from DB
         productId: apiItem.productId,
         name: apiItem.productName,
         price: apiItem.unitPrice,
         quantity: apiItem.quantity,
         image: apiItem.productImageUrl || '',
-        options: [] // API doesn't support options yet
+        options: [] // Mock options as backend doesn't support yet
       }))
       setItems(mappedItems)
     } catch (error) {
@@ -73,7 +93,7 @@ export function CartProvider({ children }) {
       } else {
         nextItems.push(productData)
       }
-      saveCartItems(nextItems)
+      saveLocalCart(nextItems)
       setItems(nextItems)
     } else {
       try {
@@ -81,7 +101,7 @@ export function CartProvider({ children }) {
           productId: productData.dbId || Number(productData.productId),
           quantity: productData.quantity
         })
-        await syncAndLoadCart() // reload to get the latest state from backend
+        await syncAndLoadCart()
       } catch (err) {
         console.error(err)
       }
@@ -92,7 +112,7 @@ export function CartProvider({ children }) {
     if (quantity < 1) quantity = 1
     if (!isAuthenticated) {
       const nextItems = items.map(item => item.id === itemId ? { ...item, quantity } : item)
-      saveCartItems(nextItems)
+      saveLocalCart(nextItems)
       setItems(nextItems)
     } else {
       try {
@@ -107,7 +127,7 @@ export function CartProvider({ children }) {
   const removeItem = async (itemId) => {
     if (!isAuthenticated) {
       const nextItems = items.filter(item => item.id !== itemId)
-      saveCartItems(nextItems)
+      saveLocalCart(nextItems)
       setItems(nextItems)
     } else {
       try {
@@ -121,11 +141,9 @@ export function CartProvider({ children }) {
 
   const clear = () => {
     if (!isAuthenticated) {
-      clearCart()
+      clearLocalCart()
       setItems([])
     } else {
-      // Backend doesn't have clear API, we'd have to delete one by one or ignore.
-      // Usually used after successful checkout.
       setItems([])
     }
   }
