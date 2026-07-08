@@ -12,7 +12,7 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD:-smart_workspace_password}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-smart_workspace_root_password}
     ports:
-      - "${MYSQL_PORT:-3306}:3306"
+      - "${MYSQL_BIND_ADDRESS:-127.0.0.1}:${MYSQL_PORT:-3306}:3306"
     volumes:
       - smart_workspace_mysql:/var/lib/mysql
     healthcheck:
@@ -46,7 +46,7 @@ services:
       PAYOS_BASE_URL: ${PAYOS_BASE_URL:-https://api-merchant.payos.vn}
       JAVA_OPTS: ${JAVA_OPTS:-}
     ports:
-      - "${BACKEND_PORT:-8080}:8080"
+      - "${BACKEND_BIND_ADDRESS:-127.0.0.1}:${BACKEND_PORT:-8080}:8080"
     volumes:
       - smart_workspace_uploads:/app/uploads
 
@@ -61,7 +61,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "${FRONTEND_PORT:-80}:80"
+      - "${FRONTEND_BIND_ADDRESS:-0.0.0.0}:${FRONTEND_PORT:-80}:80"
 
 volumes:
   smart_workspace_mysql:
