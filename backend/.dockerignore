@@ -1,0 +1,12 @@
+target
+uploads
+.idea
+.mvn
+*.iml
+*.log
+.env
+.env.*
+application-secret.properties
+src/main/resources/application-secret.properties
+cookie.txt
+data.json
