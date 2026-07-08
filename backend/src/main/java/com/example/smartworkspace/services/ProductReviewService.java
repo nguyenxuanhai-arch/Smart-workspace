@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.example.smartworkspace.commons.AppException;
 import com.example.smartworkspace.commons.ErrorCode;
+import com.example.smartworkspace.commons.PageResponse;
 import com.example.smartworkspace.dtos.review.ProductReviewRequest;
 import com.example.smartworkspace.dtos.review.ProductReviewResponse;
 import com.example.smartworkspace.dtos.review.ReviewStatusUpdateRequest;
@@ -18,6 +19,9 @@ import com.example.smartworkspace.repositories.ProductReviewRepository;
 import com.example.smartworkspace.repositories.UserRepository;
 import com.example.smartworkspace.securities.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -38,6 +42,24 @@ public class ProductReviewService {
                 .stream()
                 .map(productReviewMapper::toResponse)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<ProductReviewResponse> getReviewsForAdmin(
+            String search,
+            VisibilityStatus status,
+            Long productId,
+            int page,
+            int size
+    ) {
+        Pageable pageable = PageRequest.of(
+                Math.max(page, 0),
+                Math.max(size, 1),
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+        return PageResponse.from(productReviewRepository
+                .findAdminReviews(normalize(search), status, productId, pageable)
+                .map(productReviewMapper::toResponse));
     }
 
     @Transactional
@@ -85,5 +107,10 @@ public class ProductReviewService {
 
     private String trim(String value) {
         return value == null ? null : value.trim();
+    }
+
+    private String normalize(String value) {
+        String trimmed = trim(value);
+        return trimmed == null || trimmed.isEmpty() ? null : trimmed;
     }
 }

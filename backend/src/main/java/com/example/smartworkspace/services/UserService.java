@@ -132,9 +132,10 @@ public class UserService {
     private void applyAddressRequest(Address address, AddressRequest request) {
         address.setReceiverName(trim(request.getReceiverName()));
         address.setReceiverPhone(trim(request.getReceiverPhone()));
-        address.setProvince(trim(request.getProvince()));
-        address.setDistrict(trim(request.getDistrict()));
-        address.setWard(trim(request.getWard()));
+        address.setProvinceName(trim(request.getProvinceName()));
+        address.setProvinceCode(request.getProvinceCode());
+        address.setWardName(trim(request.getWardName()));
+        address.setWardCode(request.getWardCode());
         address.setDetailAddress(trim(request.getDetailAddress()));
     }
 

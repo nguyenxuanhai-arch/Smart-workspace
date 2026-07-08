@@ -1,43 +1,27 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { AuthProvider } from './context/AuthContext.jsx'
-import ProtectedRoute from './components/ProtectedRoute.jsx'
-import Layout from './components/Layout.jsx'
-import Login from './pages/Login.jsx'
-import Dashboard from './pages/Dashboard.jsx'
-import Products from './pages/Products.jsx'
-import AddProduct from './pages/AddProduct.jsx'
-import Orders from './pages/Orders.jsx'
-import Customers from './pages/Customers.jsx'
-import Reviews from './pages/Reviews.jsx'
-import Marketing from './pages/Marketing.jsx'
-import Policy from './pages/Policy.jsx'
-import Branches from './pages/Branches.jsx'
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import AdminApp from './admin/App.jsx'
+import ClientApp from './client/App.jsx'
+import { LEGACY_ADMIN_REDIRECTS } from './admin/routes.js'
+import { CLIENT_ROUTES } from './client/routes.js'
+
+function RedirectWithSearch({ to }) {
+  const { search } = useLocation()
+  return <Navigate to={`${to}${search}`} replace />
+}
 
 export default function App() {
+  const clientRoutes = new Set(Object.values(CLIENT_ROUTES))
+  const legacyRedirects = LEGACY_ADMIN_REDIRECTS.filter(({ from }) => from !== '/' && !clientRoutes.has(from))
+
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route
-            element={
-              <ProtectedRoute>
-                <Layout />
-              </ProtectedRoute>
-            }
-          >
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/san-pham" element={<Products />} />
-            <Route path="/danh-muc" element={<AddProduct />} />
-            <Route path="/don-hang" element={<Orders />} />
-            <Route path="/khach-hang" element={<Customers />} />
-            <Route path="/danh-gia" element={<Reviews />} />
-            <Route path="/marketing" element={<Marketing />} />
-            <Route path="/chinh-sach" element={<Policy />} />
-            <Route path="/chi-nhanh" element={<Branches />} />
-          </Route>
-        </Routes>
-      </AuthProvider>
+      <Routes>
+        <Route path="/admin/*" element={<AdminApp />} />
+        {legacyRedirects.map(({ from, to }) => (
+          <Route key={from} path={from} element={<RedirectWithSearch to={to} />} />
+        ))}
+        <Route path="/*" element={<ClientApp />} />
+      </Routes>
     </BrowserRouter>
   )
 }

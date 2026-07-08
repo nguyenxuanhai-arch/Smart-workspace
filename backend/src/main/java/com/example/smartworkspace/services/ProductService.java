@@ -58,6 +58,31 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
+    public PageResponse<ProductResponse> getProductsForAdmin(
+            String search,
+            Long categoryId,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            String sort,
+            int page,
+            int size
+    ) {
+        validatePriceRange(minPrice, maxPrice);
+        Pageable pageable = PageRequest.of(safePage(page), safeSize(size), resolveSort(sort));
+        Page<ProductResponse> productPage = productRepository
+                .findAll(productSpecForAdmin(search, categoryId, minPrice, maxPrice), pageable)
+                .map(this::toResponse);
+        return PageResponse.from(productPage);
+    }
+
+    @Transactional(readOnly = true)
+    public ProductResponse getProductForAdmin(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
+        return toResponse(product);
+    }
+
+    @Transactional(readOnly = true)
     public ProductResponse getActiveProductById(Long id) {
         Product product = productRepository.findById(id)
                 .filter(this::isPublicProduct)
@@ -179,6 +204,37 @@ public class ProductService {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(criteriaBuilder.equal(root.get("status"), ProductStatus.ACTIVE));
             predicates.add(criteriaBuilder.equal(root.get("category").get("status"), CommonStatus.ACTIVE));
+
+            if (StringUtils.hasText(search)) {
+                String keyword = "%" + search.trim().toLowerCase() + "%";
+                predicates.add(criteriaBuilder.or(
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), keyword),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("shortDescription")), keyword),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), keyword)
+                ));
+            }
+            if (categoryId != null) {
+                predicates.add(criteriaBuilder.equal(root.get("category").get("id"), categoryId));
+            }
+            if (minPrice != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("price"), minPrice));
+            }
+            if (maxPrice != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("price"), maxPrice));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(Predicate[]::new));
+        };
+    }
+
+    private Specification<Product> productSpecForAdmin(
+            String search,
+            Long categoryId,
+            BigDecimal minPrice,
+            BigDecimal maxPrice
+    ) {
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
 
             if (StringUtils.hasText(search)) {
                 String keyword = "%" + search.trim().toLowerCase() + "%";

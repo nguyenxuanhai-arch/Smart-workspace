@@ -25,4 +25,24 @@ public class PaymentController {
     ) {
         return ApiResponse.success("Create payment successfully", paymentService.createMockPayment(orderId, request));
     }
+
+    @org.springframework.web.bind.annotation.GetMapping("/my")
+    public ApiResponse<java.util.List<PaymentResponse>> getMyPayments() {
+        return ApiResponse.success(paymentService.getMyPayments());
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/all")
+    public ApiResponse<java.util.List<PaymentResponse>> getAllPayments() {
+        return ApiResponse.success(paymentService.getAllPayments());
+    }
+
+    @PostMapping("/payos/checkout")
+    public ApiResponse<com.example.smartworkspace.dtos.payment.CreatePayOSCheckoutResponse> createPayOSCheckout(
+            @Valid @RequestBody com.example.smartworkspace.dtos.payment.CreatePayOSCheckoutRequest request,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.example.smartworkspace.securities.CustomUserDetails userDetails,
+            @org.springframework.beans.factory.annotation.Autowired com.example.smartworkspace.services.PayOSPaymentService payOSPaymentService
+    ) {
+        return ApiResponse.success("Create PayOS checkout successfully", 
+            payOSPaymentService.createCheckout(request.getOrderId(), userDetails.getUser().getId()));
+    }
 }

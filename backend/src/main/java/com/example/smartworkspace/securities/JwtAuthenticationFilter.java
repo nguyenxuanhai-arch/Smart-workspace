@@ -24,6 +24,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final JwtService jwtService;
+    private final AuthCookieService authCookieService;
     private final CustomUserDetailsService customUserDetailsService;
     private final BlacklistedTokenRepository blacklistedTokenRepository;
 
@@ -72,9 +73,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private String resolveToken(HttpServletRequest request) {
         String authorizationHeader = request.getHeader(AUTHORIZATION_HEADER);
-        if (!StringUtils.hasText(authorizationHeader) || !authorizationHeader.startsWith(BEARER_PREFIX)) {
-            return null;
+        if (StringUtils.hasText(authorizationHeader) && authorizationHeader.startsWith(BEARER_PREFIX)) {
+            return authorizationHeader.substring(BEARER_PREFIX.length());
         }
-        return authorizationHeader.substring(BEARER_PREFIX.length());
+        return authCookieService.resolveAccessToken(request);
     }
 }

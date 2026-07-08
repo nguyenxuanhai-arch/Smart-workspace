@@ -240,10 +240,24 @@ GET /api/products/slug/{slug}
 ### Admin product
 
 ```txt
+GET /api/admin/products
+GET /api/admin/products/{id}
 POST /api/admin/products
 PUT /api/admin/products/{id}
 DELETE /api/admin/products/{id}
 ```
+
+Query của `GET /api/admin/products` giống `GET /api/products`:
+- `search`
+- `categoryId`
+- `minPrice`
+- `maxPrice`
+- `sort=price_asc|price_desc|newest`
+- `page`
+- `size` (mặc định admin là `100`)
+
+Khác với API public, endpoint admin trả cả sản phẩm `ACTIVE`, `INACTIVE`, `OUT_OF_STOCK`.
+Khi gọi trần `/api/admin/products`, backend dùng `size=100`; nếu cần nhiều hơn, truyền `page`/`size` rõ ràng.
 
 Upload product image:
 

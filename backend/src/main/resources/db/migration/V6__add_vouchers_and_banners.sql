@@ -1,0 +1,43 @@
+CREATE TABLE vouchers (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(80) NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    description TEXT,
+    discount_type VARCHAR(50) NOT NULL,
+    discount_value DECIMAL(15, 2) NOT NULL,
+    min_order_amount DECIMAL(15, 2) NOT NULL DEFAULT 0,
+    usage_limit INT,
+    used_count INT NOT NULL DEFAULT 0,
+    start_date DATETIME NOT NULL,
+    end_date DATETIME NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT uk_vouchers_code UNIQUE (code),
+    INDEX idx_vouchers_status (status),
+    INDEX idx_vouchers_dates (start_date, end_date),
+    CONSTRAINT chk_vouchers_discount CHECK (discount_value >= 0),
+    CONSTRAINT chk_vouchers_min_order CHECK (min_order_amount >= 0),
+    CONSTRAINT chk_vouchers_usage_limit CHECK (usage_limit IS NULL OR usage_limit >= 0),
+    CONSTRAINT chk_vouchers_used_count CHECK (used_count >= 0),
+    CONSTRAINT chk_vouchers_dates CHECK (end_date >= start_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE banners (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(200) NOT NULL,
+    image_url VARCHAR(500) NOT NULL,
+    link_url VARCHAR(500),
+    position VARCHAR(100) NOT NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    start_date DATETIME NOT NULL,
+    end_date DATETIME NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_banners_status (status),
+    INDEX idx_banners_position (position),
+    INDEX idx_banners_dates (start_date, end_date),
+    CONSTRAINT chk_banners_sort_order CHECK (sort_order >= 0),
+    CONSTRAINT chk_banners_dates CHECK (end_date >= start_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

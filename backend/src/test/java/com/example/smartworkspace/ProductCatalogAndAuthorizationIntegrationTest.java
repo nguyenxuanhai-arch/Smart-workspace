@@ -123,6 +123,69 @@ class ProductCatalogAndAuthorizationIntegrationTest {
     }
 
     @Test
+    void adminProductCatalogReturnsProductsAcrossStatuses() throws Exception {
+        String marker = "admin-catalog-test-" + UUID.randomUUID().toString().substring(0, 8);
+        Category category = categoryRepository.findBySlug("phu-kien-setup").orElseThrow();
+        Product activeProduct = createProduct(
+                category,
+                "QA " + marker + " Active Stand",
+                marker + "-active",
+                "QA-" + marker.toUpperCase() + "-ACTIVE",
+                BigDecimal.valueOf(1_200_000),
+                BigDecimal.valueOf(1_500_000)
+        );
+        Product inactiveProduct = createProduct(
+                category,
+                "QA " + marker + " Hidden Stand",
+                marker + "-inactive",
+                "QA-" + marker.toUpperCase() + "-INACTIVE",
+                BigDecimal.valueOf(2_400_000),
+                BigDecimal.valueOf(2_900_000)
+        );
+        inactiveProduct.setStatus(ProductStatus.INACTIVE);
+        productRepository.saveAndFlush(inactiveProduct);
+        Product outOfStockProduct = createProduct(
+                category,
+                "QA " + marker + " Out Of Stock Stand",
+                marker + "-out-of-stock",
+                "QA-" + marker.toUpperCase() + "-OUT",
+                BigDecimal.valueOf(3_600_000),
+                BigDecimal.valueOf(3_900_000)
+        );
+        outOfStockProduct.setStatus(ProductStatus.OUT_OF_STOCK);
+        productRepository.saveAndFlush(outOfStockProduct);
+        String adminToken = createToken(RoleName.ADMIN);
+
+        mockMvc.perform(get("/api/products")
+                        .param("search", marker)
+                        .param("sort", "price_asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items", hasSize(1)))
+                .andExpect(jsonPath("$.data.items[0].slug").value(activeProduct.getSlug()))
+                .andExpect(jsonPath("$.data.totalElements").value(1));
+
+        mockMvc.perform(get("/api/admin/products")
+                        .param("search", marker)
+                        .param("sort", "price_asc")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items", hasSize(3)))
+                .andExpect(jsonPath("$.data.items[0].slug").value(activeProduct.getSlug()))
+                .andExpect(jsonPath("$.data.items[0].status").value("ACTIVE"))
+                .andExpect(jsonPath("$.data.items[1].slug").value(inactiveProduct.getSlug()))
+                .andExpect(jsonPath("$.data.items[1].status").value("INACTIVE"))
+                .andExpect(jsonPath("$.data.items[2].slug").value(outOfStockProduct.getSlug()))
+                .andExpect(jsonPath("$.data.items[2].status").value("OUT_OF_STOCK"))
+                .andExpect(jsonPath("$.data.totalElements").value(3));
+
+        mockMvc.perform(get("/api/admin/products/{id}", inactiveProduct.getId())
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.id").value(inactiveProduct.getId()))
+                .andExpect(jsonPath("$.data.status").value("INACTIVE"));
+    }
+
+    @Test
     void securityAllowsPublicApisBlocksAnonymousUserApisAndRequiresAdminRole() throws Exception {
         String customerToken = createToken(RoleName.CUSTOMER);
         String adminToken = createToken(RoleName.ADMIN);

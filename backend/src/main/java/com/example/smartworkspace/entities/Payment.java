@@ -55,6 +55,21 @@ public class Payment {
     @Column(name = "paid_at", columnDefinition = "DATETIME")
     private LocalDateTime paidAt;
 
+    @Column(name = "provider_order_code", unique = true)
+    private Long providerOrderCode;
+
+    @Column(name = "payment_link_id", unique = true, length = 64)
+    private String paymentLinkId;
+
+    @Column(name = "checkout_url", length = 1000)
+    private String checkoutUrl;
+
+    @Column(name = "provider_reference", unique = true, length = 100)
+    private String providerReference;
+
+    @Column(name = "expired_at", columnDefinition = "DATETIME")
+    private LocalDateTime expiredAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "DATETIME")
     private LocalDateTime createdAt;

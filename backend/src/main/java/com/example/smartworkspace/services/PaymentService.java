@@ -47,6 +47,21 @@ public class PaymentService {
         return paymentMapper.toResponse(paymentRepository.save(payment));
     }
 
+    @Transactional(readOnly = true)
+    public java.util.List<PaymentResponse> getAllPayments() {
+        return paymentRepository.findAll().stream()
+                .map(paymentMapper::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public java.util.List<PaymentResponse> getMyPayments() {
+        Long userId = getCurrentUserId();
+        return paymentRepository.findByOrder_User_Id(userId).stream()
+                .map(paymentMapper::toResponse)
+                .toList();
+    }
+
     @Transactional
     public PaymentResponse updatePaymentStatus(Long id, PaymentStatusUpdateRequest request) {
         Payment payment = paymentRepository.findById(id)

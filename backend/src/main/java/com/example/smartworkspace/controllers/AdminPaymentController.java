@@ -18,6 +18,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminPaymentController {
     private final PaymentService paymentService;
 
+    @org.springframework.web.bind.annotation.GetMapping
+    public ApiResponse<java.util.List<PaymentResponse>> getAllPayments() {
+        return ApiResponse.success(paymentService.getAllPayments());
+    }
+
     @PutMapping("/{id}/status")
     public ApiResponse<PaymentResponse> updatePaymentStatus(
             @PathVariable Long id,

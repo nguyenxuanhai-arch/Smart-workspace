@@ -38,6 +38,10 @@ public enum ErrorCode {
     FEEDBACK_NOT_FOUND("Feedback not found", HttpStatus.NOT_FOUND),
     POLICY_NOT_FOUND("Policy not found", HttpStatus.NOT_FOUND),
     STORE_LOCATION_NOT_FOUND("Store location not found", HttpStatus.NOT_FOUND),
+    PROMOTION_NOT_FOUND("Promotion not found", HttpStatus.NOT_FOUND),
+    VOUCHER_NOT_FOUND("Voucher not found", HttpStatus.NOT_FOUND),
+    VOUCHER_CODE_ALREADY_EXISTS("Voucher code already exists", HttpStatus.CONFLICT),
+    BANNER_NOT_FOUND("Banner not found", HttpStatus.NOT_FOUND),
 
     OUT_OF_STOCK("Product is out of stock", HttpStatus.BAD_REQUEST),
     INTERNAL_SERVER_ERROR("Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);

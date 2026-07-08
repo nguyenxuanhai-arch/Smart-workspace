@@ -47,11 +47,21 @@ public class OrderMapper {
     }
 
     private OrderItemResponse toItemResponse(OrderItem item) {
+        String productImage = null;
+        if (item.getProduct() != null && item.getProduct().getImages() != null && !item.getProduct().getImages().isEmpty()) {
+            productImage = item.getProduct().getImages().stream()
+                    .filter(img -> Boolean.TRUE.equals(img.getIsPrimary()))
+                    .findFirst()
+                    .map(img -> img.getImageUrl())
+                    .orElse(item.getProduct().getImages().get(0).getImageUrl());
+        }
+
         return OrderItemResponse.builder()
                 .id(item.getId())
                 .productId(item.getProduct().getId())
                 .productName(item.getProductName())
                 .productSku(item.getProductSku())
+                .productImage(productImage)
                 .unitPrice(item.getUnitPrice())
                 .quantity(item.getQuantity())
                 .subtotal(item.getSubtotal())
