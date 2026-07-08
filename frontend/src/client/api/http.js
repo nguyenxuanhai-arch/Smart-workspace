@@ -2,6 +2,9 @@ import axios from 'axios'
 import { CLIENT_ROUTES } from '../routes.js'
 
 export const CLIENT_API_BASE_URL = normalizeBaseUrl(import.meta.env.VITE_API_BASE_URL || '/api')
+const ASSET_BASE_URL = normalizeBaseUrl(
+  import.meta.env.VITE_ASSET_BASE_URL || inferBackendOrigin(CLIENT_API_BASE_URL)
+)
 
 export const clientHttp = axios.create({
   baseURL: CLIENT_API_BASE_URL,
@@ -14,6 +17,15 @@ export const clientHttp = axios.create({
 
 function normalizeBaseUrl(value) {
   return String(value || '').replace(/\/+$/, '')
+}
+
+function inferBackendOrigin(apiBaseUrl) {
+  if (!/^https?:\/\//i.test(apiBaseUrl)) return ''
+  try {
+    return new URL(apiBaseUrl).origin
+  } catch {
+    return ''
+  }
 }
 
 function readJson(key) {
@@ -93,8 +105,11 @@ export function unwrapClient(promise) {
   return promise.then((res) => res.data.data)
 }
 
-export function resolveAssetUrl(url) {
-  if (!url) return ''
-  if (url.startsWith('http')) return url
-  return `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}${url}`
+export function resolveAssetUrl(path) {
+  if (!path) return ''
+  if (/^(https?:)?\/\//i.test(path) || path.startsWith('data:') || path.startsWith('blob:')) {
+    return path
+  }
+  if (!ASSET_BASE_URL) return path
+  return `${ASSET_BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`
 }

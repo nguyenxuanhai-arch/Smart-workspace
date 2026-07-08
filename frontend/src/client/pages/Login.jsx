@@ -16,12 +16,13 @@ export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
   const { isAuthenticated, loading: authLoading, login } = useClientAuth()
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState(location.state?.email || '')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const from = location.state?.from
   const redirectTo = from ? `${from.pathname}${from.search || ''}` : CLIENT_ROUTES.home
+  const successMessage = location.state?.message
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
@@ -58,6 +59,7 @@ export default function Login() {
               <input
                 type="email"
                 required
+                autoComplete="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="name@company.com"
@@ -75,6 +77,7 @@ export default function Login() {
               <input
                 type="password"
                 required
+                autoComplete="current-password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 placeholder="••••••••"
@@ -82,6 +85,9 @@ export default function Login() {
               />
             </label>
 
+            {successMessage && !error && (
+              <p className="rounded-lg bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-700">{successMessage}</p>
+            )}
             {error && <p className="rounded-lg bg-danger/10 px-4 py-3 text-sm leading-6 text-danger">{error}</p>}
 
             <button
