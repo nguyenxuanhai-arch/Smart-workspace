@@ -40,6 +40,7 @@ Mo `.env` va doi cac gia tri quan trong:
 - `MYSQL_ROOT_PASSWORD`, `DB_PASSWORD`: doi mat khau neu can.
 - `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`: chi dien khi can test PayOS that.
 - `FRONTEND_PORT`: doi thanh `8081` neu cong `80` dang bi dung.
+- `MYSQL_BIND_ADDRESS`, `BACKEND_BIND_ADDRESS`: giu `127.0.0.1` khi len server de khong public DB/backend.
 
 ## 3. Build va chay fullstack
 
@@ -61,8 +62,8 @@ Neu giu port mac dinh:
 
 - Frontend customer/admin: `http://localhost`
 - Admin route: `http://localhost/admin`
-- Backend Swagger: `http://localhost:8080/swagger-ui.html`
-- API truc tiep: `http://localhost:8080/api`
+- Backend Swagger tren may host: `http://localhost:8080/swagger-ui.html`
+- API truc tiep tren may host: `http://localhost:8080/api`
 
 Frontend container proxy:
 
@@ -143,9 +144,10 @@ Cong `80` bi chiem:
 - Doi `FRONTEND_PORT=8081` trong `.env`.
 - Truy cap `http://localhost:8081`.
 
-Cong `3306` bi MySQL local chiem:
+Cong `3306` hoac `8080` bi ung dung local chiem:
 
 - Doi `MYSQL_PORT=3307` trong `.env`.
+- Hoac doi `BACKEND_PORT=8082` neu cong backend bi chiem.
 - Backend van ket noi `db:3306` ben trong Docker, khong can doi `DB_URL`.
 
 Backend loi ket noi database:
@@ -159,7 +161,23 @@ PayOS checkout loi:
 - Dien day du 3 bien `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`.
 - Dat `APP_FRONTEND_URL` thanh URL frontend ma PayOS co the redirect ve.
 
-## 9. Len server VPS co Docker
+## 9. Len Azure VM/VPS co Docker
+
+Lua chon don gian nhat de deploy gan giong local la:
+
+- Azure Virtual Machine.
+- Ubuntu Server 22.04 LTS hoac 24.04 LTS.
+- Docker Engine + Docker Compose plugin.
+
+VM demo nen dung toi thieu 2 vCPU va 4 GB RAM. `Standard_B2s` du cho demo; `Standard_B2ms` thoai mai hon khi build Maven, MySQL va frontend cung luc.
+
+Chi can mo inbound public:
+
+- `22`: SSH.
+- `80`: HTTP.
+- `443`: HTTPS sau nay neu gan domain/chung chi.
+
+Khong can mo `3306` va `8080` ra Internet. Compose mac dinh bind MySQL/backend vao `127.0.0.1`, frontend Nginx se proxy `/api` va `/uploads` vao backend trong Docker network.
 
 Tren server:
 
@@ -171,7 +189,12 @@ cp env.example .env
 Sua `.env`:
 
 ```env
+FRONTEND_BIND_ADDRESS=0.0.0.0
 FRONTEND_PORT=80
+BACKEND_BIND_ADDRESS=127.0.0.1
+BACKEND_PORT=8080
+MYSQL_BIND_ADDRESS=127.0.0.1
+MYSQL_PORT=3306
 APP_FRONTEND_URL=http://YOUR_SERVER_IP
 APP_PUBLIC_API_URL=http://YOUR_SERVER_IP
 JWT_SECRET=replace-with-real-long-secret
@@ -191,7 +214,8 @@ Neu dung domain va HTTPS bang reverse proxy ngoai, dat:
 ```env
 APP_FRONTEND_URL=https://your-domain.com
 APP_PUBLIC_API_URL=https://your-domain.com
-FRONTEND_PORT=127.0.0.1:8081
+FRONTEND_BIND_ADDRESS=127.0.0.1
+FRONTEND_PORT=8081
 ```
 
 Sau do proxy domain vao `http://127.0.0.1:8081`.
