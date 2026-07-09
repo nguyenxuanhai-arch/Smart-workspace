@@ -35,6 +35,18 @@ export default function Header() {
     const [targetPath] = to.split('?')
     return currentLocation === to || (!to.includes('?') && pathname === to) || (targetPath === CLIENT_ROUTES.policies && pathname.startsWith(CLIENT_ROUTES.policies))
   }
+
+  const resetPageScroll = () => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }
+
+  const handleHeaderLinkClick = (event, { closeMenu = false } = {}) => {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.altKey || event.ctrlKey || event.shiftKey) return
+    if (closeMenu) setOpen(false)
+    setAccountOpen(false)
+    resetPageScroll()
+  }
+
   const handleLogout = async () => {
     await logout()
     setOpen(false)
@@ -48,7 +60,7 @@ export default function Header() {
   return (
     <header className="fixed inset-x-0 top-0 z-50 h-20 border-b border-border-subtle bg-white/95 backdrop-blur-md">
       <div className="mx-auto flex h-full w-full max-w-[1280px] items-center justify-between gap-6 px-4 sm:px-6">
-        <Link to={CLIENT_ROUTES.home} className="text-[30px] font-bold leading-[38px] text-primary">
+        <Link to={CLIENT_ROUTES.home} onClick={handleHeaderLinkClick} className="text-[30px] font-bold leading-[38px] text-primary">
           Smart Workspace
         </Link>
 
@@ -57,6 +69,7 @@ export default function Header() {
             <Link
               key={label}
               to={to}
+              onClick={handleHeaderLinkClick}
               className={`font-mono text-sm font-medium transition-colors ${
                 isActive(to) ? 'text-primary' : 'text-on-surface-variant hover:text-primary'
               }`}
@@ -70,6 +83,7 @@ export default function Header() {
           <Link
             to={CLIENT_ROUTES.cart}
             aria-label="Giỏ hàng"
+            onClick={handleHeaderLinkClick}
             className={`relative transition hover:opacity-80 ${isCartFlow ? 'text-secondary' : ''}`}
           >
             <ShoppingCart size={22} strokeWidth={1.5} />
@@ -106,6 +120,7 @@ export default function Header() {
                         <Link
                           key={item.key}
                           to={item.to}
+                          onClick={handleHeaderLinkClick}
                           className="flex items-center gap-3 px-4 py-3 font-mono text-sm text-on-surface-variant transition hover:bg-surface hover:text-primary"
                         >
                           <Icon size={16} strokeWidth={1.5} />
@@ -129,6 +144,7 @@ export default function Header() {
             <Link
               to={CLIENT_ROUTES.login}
               aria-label="Đăng nhập"
+              onClick={handleHeaderLinkClick}
               className="inline-flex items-center gap-2 rounded-lg border border-border-subtle px-3 py-2 text-primary transition hover:bg-surface"
             >
               <User size={18} strokeWidth={1.5} />
@@ -154,13 +170,13 @@ export default function Header() {
         <div className="absolute left-0 right-0 top-20 border-t border-border-subtle bg-white px-4 py-4 shadow-[0_24px_48px_-12px_rgba(19,27,46,0.08)] lg:hidden">
           <div className="grid gap-2 font-mono text-sm font-medium text-on-surface-variant">
             {headerNav.map(([label, to]) => (
-              <Link key={label} to={to} onClick={() => setOpen(false)} className="rounded-lg px-3 py-3 hover:bg-surface">
+              <Link key={label} to={to} onClick={(event) => handleHeaderLinkClick(event, { closeMenu: true })} className="rounded-lg px-3 py-3 hover:bg-surface">
                 {label}
               </Link>
             ))}
             <Link
               to={CLIENT_ROUTES.cart}
-              onClick={() => setOpen(false)}
+              onClick={(event) => handleHeaderLinkClick(event, { closeMenu: true })}
               className={`rounded-lg px-3 py-3 hover:bg-surface ${isCartFlow ? 'bg-surface text-primary' : ''}`}
             >
               Giỏ hàng{cartCount > 0 ? ` (${cartCount > 99 ? '99+' : cartCount})` : ''}
@@ -172,7 +188,7 @@ export default function Header() {
                   <Link
                     key={item.key}
                     to={item.to}
-                    onClick={() => setOpen(false)}
+                    onClick={(event) => handleHeaderLinkClick(event, { closeMenu: true })}
                     className="rounded-lg px-3 py-3 hover:bg-surface"
                   >
                     {item.label}
@@ -185,7 +201,7 @@ export default function Header() {
             ) : (
               <>
                 <span className="rounded-lg px-3 py-2 text-on-surface-variant">Chưa đăng nhập</span>
-                <Link to={CLIENT_ROUTES.login} onClick={() => setOpen(false)} className="rounded-lg px-3 py-3 hover:bg-surface">
+                <Link to={CLIENT_ROUTES.login} onClick={(event) => handleHeaderLinkClick(event, { closeMenu: true })} className="rounded-lg px-3 py-3 hover:bg-surface">
                   Đăng nhập
                 </Link>
               </>

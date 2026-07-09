@@ -5,6 +5,7 @@ import ClientLayout from '../components/layout/ClientLayout.jsx'
 import { CLIENT_ROUTES } from '../routes.js'
 import { formatCurrency } from '../utils/formatters.js'
 import { productsApi } from '../api/products.js'
+import { reviewsApi } from '../api/reviews.js'
 import { resolveAssetUrl } from '../api/http.js'
 
 const gallery = [
@@ -48,12 +49,39 @@ const frameColors = [
   { name: 'Xám', className: 'bg-gray-500' },
 ]
 
+const formatReviewDate = (iso) =>
+  iso
+    ? new Intl.DateTimeFormat('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      }).format(new Date(iso))
+    : ''
+
+function ReviewStars({ rating, size = 16 }) {
+  const roundedRating = Math.round(Number(rating) || 0)
+
+  return (
+    <div className="flex items-center gap-1">
+      {Array.from({ length: 5 }, (_, index) => (
+        <Star
+          key={index}
+          size={size}
+          className={index < roundedRating ? 'fill-primary text-primary' : 'fill-border-subtle text-border-subtle'}
+        />
+      ))}
+    </div>
+  )
+}
+
 import { useCart } from '../context/CartContext.jsx'
 
 export default function ProductDetail() {
   const { slug } = useParams()
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [reviews, setReviews] = useState([])
+  const [reviewsLoading, setReviewsLoading] = useState(false)
   
   const [activeImage, setActiveImage] = useState(0)
   const [size, setSize] = useState(sizes[0])
@@ -67,16 +95,44 @@ export default function ProductDetail() {
   const displayOldPrice = product?.oldPrice || 10000000
   
   const total = useMemo(() => displayPrice * quantity, [displayPrice, quantity])
+  const averageRating = useMemo(() => {
+    if (reviews.length === 0) return 0
+    return reviews.reduce((sum, review) => sum + (Number(review.rating) || 0), 0) / reviews.length
+  }, [reviews])
+  const descriptionBlocks = useMemo(() => {
+    const description = product?.description || product?.shortDescription || ''
+    return description
+      .split(/\n+/)
+      .map((item) => item.trim())
+      .filter(Boolean)
+  }, [product?.description, product?.shortDescription])
 
   useEffect(() => {
     setLoading(true)
     productsApi.getBySlug(slug)
       .then(res => {
         setProduct(res)
+        setActiveImage(0)
       })
       .catch(err => console.error(err))
       .finally(() => setLoading(false))
   }, [slug])
+
+  useEffect(() => {
+    if (!product?.id) {
+      setReviews([])
+      return
+    }
+
+    setReviewsLoading(true)
+    reviewsApi.listByProduct(product.id)
+      .then((res) => setReviews(Array.isArray(res) ? res : []))
+      .catch((err) => {
+        console.error(err)
+        setReviews([])
+      })
+      .finally(() => setReviewsLoading(false))
+  }, [product?.id])
 
   useEffect(() => {
     setAdded(false)
@@ -175,10 +231,12 @@ export default function ProductDetail() {
             </h1>
             <div className="mb-6 flex items-center gap-4 border-b border-border-subtle pb-6">
               <div className="flex items-center text-primary">
-                <Star size={20} className="fill-primary" />
-                <span className="ml-1 font-mono text-sm font-bold">4.9</span>
+                <ReviewStars rating={averageRating} size={20} />
+                <span className="ml-2 font-mono text-sm font-bold">{reviews.length > 0 ? averageRating.toFixed(1) : '0.0'}</span>
               </div>
-              <span className="font-mono text-xs text-on-surface-variant underline decoration-border-subtle">(120 đánh giá)</span>
+              <span className="font-mono text-xs text-on-surface-variant underline decoration-border-subtle">
+                ({reviews.length} đánh giá)
+              </span>
             </div>
 
             <div className="mb-8 flex items-end gap-4">
@@ -289,6 +347,64 @@ export default function ProductDetail() {
               </div>
             </div>
           </div>
+        </section>
+
+        <section className="mt-section-gap-mobile grid gap-10 border-t border-border-subtle pt-12 lg:mt-section-gap lg:grid-cols-[minmax(0,1fr)_420px]">
+          <article>
+            <p className="mb-3 font-mono text-xs font-medium uppercase text-secondary">Thông tin chi tiết</p>
+            <h2 className="mb-6 text-[30px] font-semibold leading-[38px] text-primary">Mô tả sản phẩm</h2>
+            {descriptionBlocks.length > 0 ? (
+              <div className="space-y-4 text-base leading-7 text-on-surface-variant">
+                {descriptionBlocks.map((block) => (
+                  <p key={block}>{block}</p>
+                ))}
+              </div>
+            ) : (
+              <p className="text-base leading-7 text-on-surface-variant">Thông tin chi tiết của sản phẩm đang được cập nhật.</p>
+            )}
+          </article>
+
+          <aside>
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="mb-3 font-mono text-xs font-medium uppercase text-secondary">Đánh giá sản phẩm</p>
+                <h2 className="text-[30px] font-semibold leading-[38px] text-primary">
+                  {reviews.length > 0 ? `${averageRating.toFixed(1)}/5` : 'Chưa có đánh giá'}
+                </h2>
+              </div>
+              <div className="text-right">
+                <ReviewStars rating={averageRating} size={18} />
+                <p className="mt-2 font-mono text-xs text-on-surface-variant">{reviews.length} đánh giá hiển thị</p>
+              </div>
+            </div>
+
+            {reviewsLoading ? (
+              <div className="flex justify-center rounded-lg border border-border-subtle bg-white py-10">
+                <Loader2 className="animate-spin text-primary" size={24} />
+              </div>
+            ) : reviews.length > 0 ? (
+              <div className="space-y-4">
+                {reviews.map((review) => (
+                  <article key={review.id} className="rounded-lg border border-border-subtle bg-white p-5 shadow-sm">
+                    <div className="mb-3 flex items-start justify-between gap-4">
+                      <div>
+                        <h3 className="font-mono text-sm font-bold text-primary">{review.userFullName || 'Khách hàng'}</h3>
+                        <p className="mt-1 font-mono text-[11px] text-on-surface-variant">{formatReviewDate(review.createdAt)}</p>
+                      </div>
+                      <ReviewStars rating={review.rating} />
+                    </div>
+                    {review.content && (
+                      <p className="text-base leading-6 text-on-surface-variant">"{review.content}"</p>
+                    )}
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-lg border border-border-subtle bg-white p-6 text-center">
+                <p className="font-mono text-sm text-on-surface-variant">Sản phẩm này chưa có đánh giá.</p>
+              </div>
+            )}
+          </aside>
         </section>
       </main>
     </ClientLayout>

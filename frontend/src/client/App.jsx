@@ -4,6 +4,7 @@ import ComboSection from './components/home/ComboSection.jsx'
 import ReviewsSection from './components/home/ReviewsSection.jsx'
 import Workspace3DSection from './components/home/Workspace3DSection.jsx'
 import ClientLayout from './components/layout/ClientLayout.jsx'
+import ScrollToTop from './components/layout/ScrollToTop.jsx'
 import AccountPage from './pages/AccountPage.jsx'
 import Home from './pages/Home.jsx'
 import Cart from './pages/Cart.jsx'
@@ -57,6 +58,7 @@ export default function ClientApp() {
   return (
     <ClientAuthProvider>
       <CartProvider>
+        <ScrollToTop />
         <Routes>
           <Route index element={<Home />} />
           <Route

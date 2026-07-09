@@ -391,7 +391,7 @@ export default function ProductCatalog() {
 
   return (
     <ClientLayout>
-      <main className="mx-auto max-w-[1280px] px-4 pb-section-gap-mobile pt-40 sm:px-6 lg:pb-section-gap lg:pt-44">
+      <main className="mx-auto max-w-[1280px] px-4 pb-section-gap-mobile pt-28 sm:px-6 lg:pb-section-gap lg:pt-32">
         <header className="mb-12 lg:mb-16">
           <nav className="mb-6 flex items-center gap-2">
             <Link to={CLIENT_ROUTES.home} className="font-mono text-xs font-medium text-on-surface-variant transition hover:text-secondary">
