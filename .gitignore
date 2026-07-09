@@ -19,3 +19,5 @@ backend/uploads/
 
 # Logs
 *.log
+ssl/key.pem
+ssl/cert.pem
