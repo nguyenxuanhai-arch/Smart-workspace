@@ -161,61 +161,345 @@ PayOS checkout loi:
 - Dien day du 3 bien `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`.
 - Dat `APP_FRONTEND_URL` thanh URL frontend ma PayOS co the redirect ve.
 
-## 9. Len Azure VM/VPS co Docker
+## 9. Deploy tu dong len Azure VM bang cloud-init
 
-Lua chon don gian nhat de deploy gan giong local la:
+Lua chon deploy don gian nhat, gan giong local va khong can setup server thu cong:
 
 - Azure Virtual Machine.
-- Ubuntu Server 22.04 LTS hoac 24.04 LTS.
-- Docker Engine + Docker Compose plugin.
+- Ubuntu Server 22.04 LTS.
+- Docker Engine va Docker Compose duoc cloud-init tu cai.
+- Source code duoc clone truc tiep tu GitHub.
+- Fullstack duoc khoi dong bang `docker compose up -d --build`.
+- Cloud-init tao swap 4 GB de VM nho van build duoc Maven/npm on dinh hon.
 
-VM demo nen dung toi thieu 2 vCPU va 4 GB RAM. `Standard_B2s` du cho demo; `Standard_B2ms` thoai mai hon khi build Maven, MySQL va frontend cung luc.
+Cloud-init chay trong lan boot dau tien cua VM, co the cai package, ghi file va chay lenh khoi tao. Azure CLI truyen file cloud-init vao VM bang tham so `--custom-data`. Ubuntu 22.04 va Ubuntu 24.04 tren Azure deu ho tro cloud-init. Xem them tai Microsoft Learn: [cloud-init VM deployment][1].
 
-Chi can mo inbound public:
+### 9.1. Kien truc tren Azure VM
 
-- `22`: SSH.
-- `80`: HTTP.
-- `443`: HTTPS sau nay neu gan domain/chung chi.
+```txt
+Internet
+   |
+   | port 80
+   v
+Frontend Nginx container
+   |
+   | /api va /uploads
+   v
+Backend Spring Boot container
+   |
+   v
+MySQL container
+```
 
-Khong can mo `3306` va `8080` ra Internet. Compose mac dinh bind MySQL/backend vao `127.0.0.1`, frontend Nginx se proxy `/api` va `/uploads` vao backend trong Docker network.
+Chi mo inbound public:
 
-Tren server:
+```txt
+22  SSH, dung de du phong
+80  HTTP
+443 HTTPS, mo sau khi gan domain
+```
+
+Khong mo public:
+
+```txt
+3306 MySQL
+8080 Backend
+```
+
+Compose da bind MySQL va backend vao `127.0.0.1`. Frontend Nginx la entrypoint duy nhat va proxy `/api`, `/uploads` sang backend.
+
+### 9.2. Thu muc Azure deployment
+
+Repo co them cau truc:
+
+```txt
+infra/
+`-- azure-vm/
+    |-- cloud-init.yml
+    `-- deploy-azure.sh
+```
+
+### 9.3. File cloud-init.yml
+
+File `infra/azure-vm/cloud-init.yml` tu dong:
+
+- Cai Docker Engine va Docker Compose plugin.
+- Clone repo vao `/opt/smart-workspace`.
+- Sinh password database va JWT secret bang `openssl`.
+- Tao `/opt/smart-workspace/.env`.
+- Chay `docker compose up -d --build`.
+- Ghi log vao `/var/log/smart-workspace-deploy.log`.
+
+Khong ghi truc tiep password hay JWT secret vao `cloud-init.yml`. Script tu sinh secret ben trong VM va ghi vao `.env` local cua VM. Microsoft khuyen khong dat du lieu nhay cam trong Azure Custom Data, nen khong truyen secret tu Cloud Shell vao cloud-init. Xem them: [Azure custom data][2].
+
+### 9.4. File deploy-azure.sh
+
+File `infra/azure-vm/deploy-azure.sh` tao Resource Group, Ubuntu VM, public DNS, mo port 80, truyen cloud-init vao VM va doi deployment hoan thanh.
+
+Co the override bien khi chay:
 
 ```bash
-git pull
-cp env.example .env
+RESOURCE_GROUP=rg-smart-workspace-prod \
+LOCATION=malaysiawest \
+VM_NAME=vm-smart-workspace \
+VM_SIZE=Standard_DS1_v2 \
+bash infra/azure-vm/deploy-azure.sh
 ```
 
-Sua `.env`:
+Mac dinh:
 
-```env
-FRONTEND_BIND_ADDRESS=0.0.0.0
-FRONTEND_PORT=80
-BACKEND_BIND_ADDRESS=127.0.0.1
-BACKEND_PORT=8080
-MYSQL_BIND_ADDRESS=127.0.0.1
-MYSQL_PORT=3306
-APP_FRONTEND_URL=http://YOUR_SERVER_IP
-APP_PUBLIC_API_URL=http://YOUR_SERVER_IP
-JWT_SECRET=replace-with-real-long-secret
-DB_PASSWORD=replace-with-real-db-password
-MYSQL_ROOT_PASSWORD=replace-with-real-root-password
+```txt
+RESOURCE_GROUP=rg-smart-workspace-dev-malaysiawest
+LOCATION=malaysiawest
+VM_NAME=vm-smart-workspace
+VM_SIZE=Standard_DS1_v2
+ADMIN_USERNAME=azureuser
 ```
 
-Sau do:
+### 9.5. Deploy bang Azure Cloud Shell
+
+Mo Azure Portal, sau do mo:
+
+```txt
+Cloud Shell
+```
+
+Chon Bash.
+
+Clone repository:
 
 ```bash
-docker compose up -d --build
-docker compose logs -f backend
+git clone https://github.com/nguyenxuanhai-arch/Smart-workspace.git
+cd Smart-workspace
 ```
 
-Neu dung domain va HTTPS bang reverse proxy ngoai, dat:
+Chay deploy:
 
-```env
-APP_FRONTEND_URL=https://your-domain.com
-APP_PUBLIC_API_URL=https://your-domain.com
-FRONTEND_BIND_ADDRESS=127.0.0.1
-FRONTEND_PORT=8081
+```bash
+bash infra/azure-vm/deploy-azure.sh
 ```
 
-Sau do proxy domain vao `http://127.0.0.1:8081`.
+Day la lenh deploy duy nhat.
+
+Script se tu dong:
+
+```txt
+1. Tao Resource Group.
+2. Tao Ubuntu VM.
+3. Tao SSH key neu chua co.
+4. Tao public IP va DNS.
+5. Mo port 80.
+6. Gui cloud-init vao VM.
+7. Cai Docker Engine.
+8. Cai Docker Compose plugin.
+9. Clone source code.
+10. Sinh database password va JWT secret.
+11. Tao file .env production.
+12. Build MySQL, backend va frontend.
+13. Khoi dong fullstack.
+14. Kiem tra trang thai container.
+15. In URL website.
+```
+
+Azure CLI co the truyen cloud-init vao VM bang `az vm create --custom-data`. Lenh tao VM co the tra ket qua truoc khi tat ca tac vu cloud-init hoan tat, vi vay script dung `cloud-init status --wait` de cho qua trinh build va deploy xong.
+
+Lan deploy dau co the mat vai phut vi VM phai:
+
+```txt
+Tai Docker image MySQL.
+Build backend bang Maven.
+Build frontend bang npm.
+Khoi tao MySQL.
+Chay Flyway migration va seed data.
+```
+
+### 9.6. Truy cap ung dung
+
+Sau khi script hoan thanh, terminal se in URL dang:
+
+```txt
+http://smart-workspace-abc123.malaysiawest.cloudapp.azure.com
+```
+
+Cac duong dan:
+
+```txt
+Frontend:
+http://smart-workspace-abc123.malaysiawest.cloudapp.azure.com
+
+Admin:
+http://smart-workspace-abc123.malaysiawest.cloudapp.azure.com/admin
+
+API:
+http://smart-workspace-abc123.malaysiawest.cloudapp.azure.com/api/products
+
+Uploads:
+http://smart-workspace-abc123.malaysiawest.cloudapp.azure.com/uploads/products/...
+```
+
+Khong truy cap backend bang port `8080`. Browser goi API cung origin qua Nginx:
+
+```txt
+/api -> backend:8080/api
+/uploads -> backend:8080/uploads
+```
+
+### 9.7. Kiem tra deployment ma khong can SSH
+
+Xem trang thai cloud-init:
+
+```bash
+az vm run-command invoke \
+  --resource-group rg-smart-workspace-dev-malaysiawest \
+  --name vm-smart-workspace \
+  --command-id RunShellScript \
+  --scripts "cloud-init status --long" \
+  --query "value[0].message" \
+  --output tsv
+```
+
+Xem log deploy:
+
+```bash
+az vm run-command invoke \
+  --resource-group rg-smart-workspace-dev-malaysiawest \
+  --name vm-smart-workspace \
+  --command-id RunShellScript \
+  --scripts "tail -n 200 /var/log/smart-workspace-deploy.log" \
+  --query "value[0].message" \
+  --output tsv
+```
+
+Xem container:
+
+```bash
+az vm run-command invoke \
+  --resource-group rg-smart-workspace-dev-malaysiawest \
+  --name vm-smart-workspace \
+  --command-id RunShellScript \
+  --scripts "cd /opt/smart-workspace && docker compose ps" \
+  --query "value[0].message" \
+  --output tsv
+```
+
+Xem backend log:
+
+```bash
+az vm run-command invoke \
+  --resource-group rg-smart-workspace-dev-malaysiawest \
+  --name vm-smart-workspace \
+  --command-id RunShellScript \
+  --scripts "cd /opt/smart-workspace && docker compose logs --tail=200 backend" \
+  --query "value[0].message" \
+  --output tsv
+```
+
+Cloud-init log chuan tren Azure Linux VM nam tai `/var/log/cloud-init.log`; log rieng cua deployment nay duoc ghi vao `/var/log/smart-workspace-deploy.log`. Xem them: [cloud-init support for Linux VMs][3].
+
+### 9.8. Cap nhat code sau nay bang Azure Run Command
+
+Sau khi push code moi len GitHub, co the cap nhat VM ma khong can SSH:
+
+```bash
+az vm run-command invoke \
+  --resource-group rg-smart-workspace-dev-malaysiawest \
+  --name vm-smart-workspace \
+  --command-id RunShellScript \
+  --scripts '
+    set -e
+
+    cd /opt/smart-workspace
+
+    git pull origin main
+
+    docker compose up -d --build
+    docker image prune -f
+
+    docker compose ps
+  ' \
+  --query "value[0].message" \
+  --output tsv
+```
+
+### 9.9. Tu dong rebuild khi push GitHub
+
+Repo co workflow `.github/workflows/deploy-azure-vm.yml`.
+
+Workflow nay chay khi push vao branch:
+
+```txt
+main
+frontend
+```
+
+Moi lan chay, GitHub Actions se:
+
+```txt
+1. Dang nhap Azure bang secret AZURE_CREDENTIALS.
+2. Goi Azure Run Command vao VM `vm-smart-workspace`.
+3. Tren VM, checkout dung branch vua push.
+4. Chay `docker compose up -d --build --remove-orphans`.
+5. Xoa image rac bang `docker image prune -f`.
+6. Health check frontend va `/api/products`.
+```
+
+Workflow dung GitHub OIDC de dang nhap Azure, khong can luu Azure password trong GitHub Secrets.
+
+```txt
+Azure Entra app: github-smart-workspace-vm-deploy
+Client ID: de3b8ab5-c38b-4929-b6a1-b0c443d51485
+```
+
+Service principal cua app nay chi co quyen Contributor tren resource group deploy:
+
+```txt
+rg-smart-workspace-dev-malaysiawest
+```
+
+Federated credentials da duoc tao cho:
+
+```txt
+repo:nguyenxuanhai-arch/Smart-workspace:ref:refs/heads/main
+repo:nguyenxuanhai-arch/Smart-workspace:ref:refs/heads/frontend
+```
+
+### 9.10. Xoa toan bo moi truong Azure
+
+Khi demo xong va khong can giu database:
+
+```bash
+az group delete \
+  --name rg-smart-workspace-dev-malaysiawest \
+  --yes \
+  --no-wait
+```
+
+Lenh nay xoa:
+
+```txt
+VM
+Public IP
+DNS
+Network Security Group
+Virtual Network
+Managed Disk
+Toan bo Docker volume nam tren VM
+```
+
+Neu database va uploads con can su dung, phai backup truoc khi xoa Resource Group.
+
+Luong cuoi cung:
+
+```txt
+Azure Cloud Shell
+-> bash infra/azure-vm/deploy-azure.sh
+-> Azure tao VM
+-> cloud-init cai Docker
+-> clone GitHub
+-> docker compose up -d --build
+-> website online
+```
+
+[1]: https://learn.microsoft.com/en-us/azure/virtual-machines/linux/tutorial-automate-vm-deployment
+[2]: https://learn.microsoft.com/en-us/azure/virtual-machines/custom-data
+[3]: https://learn.microsoft.com/en-us/azure/virtual-machines/linux/using-cloud-init
