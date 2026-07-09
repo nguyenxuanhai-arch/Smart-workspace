@@ -116,51 +116,47 @@ function Rating({ value, count }) {
   )
 }
 
-import { useCart } from '../context/CartContext.jsx'
-
 function ProductCard({ product }) {
-  const [added, setAdded] = useState(false)
   const badgeClass = product.badgeTone === 'danger' ? 'bg-danger text-white' : 'bg-secondary text-white'
-  const { addItem } = useCart()
+  const [isHovered, setIsHovered] = useState(false)
+  const [imgIndex, setImgIndex] = useState(0)
 
-  const handleAddToCart = () => {
-    addItem({
-      id: product.id,
-      productId: product.id,
-      dbId: product.dbId,
-      name: product.name,
-      price: product.price,
-      quantity: 1,
-      image: product.image,
-      options: [['Loại', product.specs.join(' / ')]],
-    })
-    setAdded(true)
-  }
+  const images = product.images?.length > 0 ? product.images : [product.image]
+
+  useEffect(() => {
+    let interval
+    if (isHovered && images.length > 1) {
+      interval = setInterval(() => {
+        setImgIndex(prev => (prev + 1) % images.length)
+      }, 1000)
+    } else {
+      setImgIndex(0)
+    }
+    return () => clearInterval(interval)
+  }, [isHovered, images.length])
 
   return (
-    <article className="group overflow-hidden rounded-lg bg-white transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_48px_-12px_rgba(19,27,46,0.08)]">
-      <div className="relative aspect-[4/5] overflow-hidden bg-surface-container-low">
+    <Link 
+      to={`/san-pham/${product.id}`} 
+      className="block group overflow-hidden rounded-lg bg-white transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_48px_-12px_rgba(19,27,46,0.08)]"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className="relative aspect-video overflow-hidden bg-surface-container-low">
         {product.badge && (
-          <div className="absolute left-4 top-4 z-10">
+          <div className="absolute left-4 top-4 z-20">
             <span className={`rounded-full px-3 py-1 font-mono text-xs font-medium ${badgeClass}`}>{product.badge}</span>
           </div>
         )}
-        <img src={product.image} alt={product.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
-        <div className="absolute inset-0 flex items-end justify-center bg-black/5 px-4 pb-8 opacity-100 transition duration-300 sm:translate-y-3 sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100">
-          <div className="flex w-full gap-2">
-            <button
-              type="button"
-              onClick={handleAddToCart}
-              className={`flex-1 rounded-lg py-3 font-mono text-sm font-medium text-white transition hover:opacity-90 ${
-                added ? 'bg-secondary' : 'bg-primary'
-              }`}
-            >
-              {added ? 'Đã thêm' : 'Thêm vào giỏ'}
-            </button>
-            <Link to={`/san-pham/${product.id}`} className="flex h-12 w-12 items-center justify-center rounded-lg border border-border-subtle bg-white text-primary transition hover:bg-surface">
-              <Eye size={18} strokeWidth={1.5} />
-            </Link>
-          </div>
+        <div className="absolute inset-0 h-full w-full transition duration-500 group-hover:scale-105">
+          {images.map((img, idx) => (
+            <img 
+              key={idx}
+              src={img} 
+              alt={product.name} 
+              className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${idx === imgIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'}`} 
+            />
+          ))}
         </div>
       </div>
       <div className="space-y-2 pt-6">
@@ -176,16 +172,16 @@ function ProductCard({ product }) {
             </span>
           ))}
         </div>
-        <Link to={`/san-pham/${product.id}`} className="block text-xl font-semibold text-primary transition-colors group-hover:text-secondary">
+        <h3 className="block text-xl font-semibold text-primary transition-colors group-hover:text-secondary">
           {product.name}
-        </Link>
+        </h3>
         <Rating value={product.rating} count={product.reviewCount} />
         <div className="flex flex-wrap items-baseline gap-3">
           <span className="text-[22px] font-semibold leading-7 text-primary">{formatCurrency(product.price)}</span>
           {product.oldPrice && <span className="text-base leading-6 text-outline line-through">{formatCurrency(product.oldPrice)}</span>}
         </div>
       </div>
-    </article>
+    </Link>
   )
 }
 
@@ -342,7 +338,8 @@ export default function ProductCatalog() {
             color: 'obsidian', // placeholder for now
             features: ['anti-collision'], // placeholder for now
             specs: [p.sku || 'N/A'],
-            image: resolveAssetUrl(mainImage)
+            image: resolveAssetUrl(mainImage),
+            images: p.images?.length > 0 ? p.images.map(img => resolveAssetUrl(img.imageUrl)) : [resolveAssetUrl(mainImage)]
           }
         })
         setApiProducts(mapped)
@@ -455,9 +452,11 @@ export default function ProductCatalog() {
                 <Loader2 className="animate-spin text-primary" size={32} />
               </div>
             ) : visibleProducts.length > 0 ? (
-              <div className="grid grid-cols-1 gap-x-gutter gap-y-12 md:grid-cols-2 xl:grid-cols-3">
-                {visibleProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+              <div className="grid grid-cols-2 gap-x-gutter gap-y-12 pb-12">
+                {visibleProducts.map((product, index) => (
+                  <div key={product.id} className={index % 2 === 0 ? 'translate-y-12' : ''}>
+                    <ProductCard product={product} />
+                  </div>
                 ))}
               </div>
             ) : (
