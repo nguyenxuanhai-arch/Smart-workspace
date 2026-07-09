@@ -318,6 +318,7 @@ export default function ProductCatalog() {
   const selectedCategories = splitParam(searchParams.get('category'))
   const [apiProducts, setApiProducts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [visibleCount, setVisibleCount] = useState(10)
 
   useEffect(() => {
     productsApi.list({ size: 100 })
@@ -453,7 +454,7 @@ export default function ProductCatalog() {
               </div>
             ) : visibleProducts.length > 0 ? (
               <div className="grid grid-cols-2 gap-x-gutter gap-y-12 pb-12">
-                {visibleProducts.map((product, index) => (
+                {visibleProducts.slice(0, visibleCount).map((product, index) => (
                   <div key={product.id} className={index % 2 === 0 ? 'translate-y-12' : ''}>
                     <ProductCard product={product} />
                   </div>
@@ -467,13 +468,18 @@ export default function ProductCatalog() {
             )}
 
             <div className="mt-20 flex flex-col items-center gap-4">
-              <button className="group inline-flex items-center gap-3 rounded-lg border border-primary px-8 py-4 font-mono text-sm font-medium text-primary transition duration-300 hover:bg-primary hover:text-white">
-                Tải thêm sản phẩm
-                <ChevronDown size={18} strokeWidth={1.5} className="transition duration-500 group-hover:rotate-180" />
-              </button>
-              <p className="font-mono text-xs text-on-surface-variant">Hiển thị {visibleProducts.length} trên {apiProducts.length} sản phẩm</p>
+              {visibleCount < visibleProducts.length && (
+                <button 
+                  onClick={() => setVisibleCount(prev => prev + 10)}
+                  className="group inline-flex items-center gap-3 rounded-lg border border-primary px-8 py-4 font-mono text-sm font-medium text-primary transition duration-300 hover:bg-primary hover:text-white"
+                >
+                  Tải thêm sản phẩm
+                  <ChevronDown size={18} strokeWidth={1.5} className="transition duration-500 group-hover:rotate-180" />
+                </button>
+              )}
+              <p className="font-mono text-xs text-on-surface-variant">Hiển thị {Math.min(visibleCount, visibleProducts.length)} trên {visibleProducts.length} sản phẩm</p>
               <div className="h-1 w-64 overflow-hidden rounded-full bg-surface-container">
-                <div className="h-full w-[12.5%] bg-primary" />
+                <div className="h-full bg-primary transition-all duration-300" style={{ width: `${(Math.min(visibleCount, visibleProducts.length) / Math.max(visibleProducts.length, 1)) * 100}%` }} />
               </div>
             </div>
           </section>
