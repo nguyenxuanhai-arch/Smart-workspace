@@ -1,0 +1,93 @@
+name: Deploy Azure VM
+
+on:
+  push:
+    branches:
+      - main
+      - frontend
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-azure-vm
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    env:
+      AZURE_RESOURCE_GROUP: rg-smart-workspace-dev-malaysiawest
+      AZURE_VM_NAME: vm-smart-workspace
+      AZURE_CLIENT_ID: de3b8ab5-c38b-4929-b6a1-b0c443d51485
+      AZURE_TENANT_ID: 14d5de2b-d212-4175-92d5-156ea5b7c037
+      AZURE_SUBSCRIPTION_ID: 12304b9a-e7b7-4a7e-92cf-362bc3811cf3
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Rebuild Docker Compose on VM
+        env:
+          DEPLOY_BRANCH: ${{ github.ref_name }}
+        run: |
+          cat > remote-deploy.sh <<EOF
+          set -eu
+
+          cd /opt/smart-workspace
+
+          git fetch origin "+refs/heads/${DEPLOY_BRANCH}:refs/remotes/origin/${DEPLOY_BRANCH}"
+          git checkout -B "${DEPLOY_BRANCH}" "refs/remotes/origin/${DEPLOY_BRANCH}"
+
+          docker compose up -d --build --remove-orphans
+          docker image prune -f
+
+          docker compose ps
+
+          healthy=false
+          for attempt in \$(seq 1 30); do
+            if curl -fsS http://localhost >/dev/null && curl -fsS http://localhost/api/products >/dev/null; then
+              echo "Health check passed."
+              healthy=true
+              break
+            fi
+
+            echo "Waiting for app to become healthy... attempt \${attempt}/30"
+            sleep 10
+          done
+
+          if [ "\${healthy}" != "true" ]; then
+            echo "Health check failed. Backend logs:"
+            docker compose logs --tail=160 backend
+            exit 1
+          fi
+
+          echo "REMOTE_DEPLOY_SUCCESS"
+          EOF
+
+          deploy_script_b64="$(base64 -w0 remote-deploy.sh)"
+
+          deploy_output="$(az vm run-command invoke \
+            --resource-group "${AZURE_RESOURCE_GROUP}" \
+            --name "${AZURE_VM_NAME}" \
+            --command-id RunShellScript \
+            --scripts "printf '%s' '${deploy_script_b64}' | base64 -d > /tmp/smart-workspace-deploy.sh && sh /tmp/smart-workspace-deploy.sh" \
+            --query "value[0].message" \
+            --output tsv)"
+
+          echo "${deploy_output}"
+
+          if ! grep -q "REMOTE_DEPLOY_SUCCESS" <<< "${deploy_output}"; then
+            echo "Remote deploy did not report success."
+            exit 1
+          fi

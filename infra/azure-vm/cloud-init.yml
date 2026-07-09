@@ -1,0 +1,115 @@
+#cloud-config
+
+package_update: true
+package_upgrade: false
+
+packages:
+  - git
+  - curl
+  - ca-certificates
+  - openssl
+
+runcmd:
+  - |
+    set -eu
+
+    exec >> /var/log/smart-workspace-deploy.log 2>&1
+
+    echo "=== Install Docker Engine ==="
+
+    curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
+    sh /tmp/get-docker.sh
+
+    systemctl enable docker
+    systemctl start docker
+
+    docker --version
+    docker compose version
+
+    echo "=== Configure swap ==="
+
+    if [ ! -f /swapfile ]; then
+      fallocate -l 4G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=4096
+      chmod 600 /swapfile
+      mkswap /swapfile
+      swapon /swapfile
+      echo "/swapfile none swap sw 0 0" >> /etc/fstab
+    fi
+
+    free -h
+
+    echo "=== Clone Smart Workspace repository ==="
+
+    rm -rf /opt/smart-workspace
+
+    for attempt in 1 2 3 4 5; do
+      if git clone --depth 1 \
+        https://github.com/nguyenxuanhai-arch/Smart-workspace.git \
+        /opt/smart-workspace; then
+        break
+      fi
+
+      echo "Git clone failed. Retry after 15 seconds..."
+      sleep 15
+    done
+
+    test -f /opt/smart-workspace/docker-compose.yml
+
+    cd /opt/smart-workspace
+
+    echo "=== Generate production secrets ==="
+
+    DB_PASSWORD="$(openssl rand -hex 24)"
+    MYSQL_ROOT_PASSWORD="$(openssl rand -hex 32)"
+    JWT_SECRET="$(openssl rand -hex 64)"
+
+    cat > .env <<EOF
+    FRONTEND_BIND_ADDRESS=0.0.0.0
+    FRONTEND_PORT=80
+
+    BACKEND_BIND_ADDRESS=127.0.0.1
+    BACKEND_PORT=8080
+
+    MYSQL_BIND_ADDRESS=127.0.0.1
+    MYSQL_PORT=3306
+
+    MYSQL_DATABASE=smart_workspace
+    MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+
+    DB_URL=jdbc:mysql://db:3306/smart_workspace?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh&useUnicode=true&characterEncoding=utf8
+    DB_USERNAME=smart_workspace
+    DB_PASSWORD=${DB_PASSWORD}
+
+    JWT_SECRET=${JWT_SECRET}
+    JWT_EXPIRATION_MS=86400000
+    JWT_REFRESH_EXPIRATION_MS=604800000
+
+    APP_FRONTEND_URL=__PUBLIC_URL__
+    APP_PUBLIC_API_URL=__PUBLIC_URL__
+
+    PAYOS_CLIENT_ID=23003168-4981-4c9b-98fd-577e1c11aad5
+    PAYOS_API_KEY=62ecaa79-4082-47c0-a923-85d253d77924
+    PAYOS_CHECKSUM_KEY=e4bb1d11851a642841d4d02d32c1aaee86ec198e3c65fbae89d7749953e24d17
+    PAYOS_BASE_URL=https://api-merchant.payos.vn
+
+    VITE_API_BASE_URL=/api
+    VITE_ASSET_BASE_URL=
+
+    JAVA_OPTS=-Xms256m -Xmx1024m
+    EOF
+
+    chmod 600 .env
+
+    echo "=== Build and start fullstack ==="
+
+    docker compose pull db
+    docker compose up -d --build
+
+    echo "=== Deployment status ==="
+
+    docker compose ps
+    docker compose logs --tail=100 backend
+
+    touch /var/lib/smart-workspace-deploy.done
+
+    echo "=== Smart Workspace deployment completed ==="
