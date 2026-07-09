@@ -20,12 +20,12 @@ export default function Workspace3DSection() {
         <div className="lg:col-span-7">
           <div className="relative rounded-3xl">
             <WorkspaceModel deskColor={deskColors[deskColorIndex].className} rotate={rotate} activeStyle={activeStyle} />
-            <div className="absolute bottom-8 left-8 hidden gap-4 lg:flex">
-              <button onClick={() => setRotate((value) => value + 90)} className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-6 py-2 font-mono text-xs font-medium text-on-primary backdrop-blur-md transition hover:bg-white/20">
-                <RotateCcw size={16} /> Xoay 360°
+            <div className="absolute bottom-4 left-4 flex flex-wrap gap-2 sm:bottom-8 sm:left-8 sm:gap-4">
+              <button onClick={() => setRotate((value) => value + 90)} className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 font-mono text-[10px] font-medium text-on-primary backdrop-blur-md transition hover:bg-white/20 sm:gap-2 sm:px-6 sm:py-2 sm:text-xs">
+                <RotateCcw size={14} className="sm:h-4 sm:w-4" /> Xoay 360°
               </button>
-              <button onClick={() => setDeskColorIndex((value) => (value + 1) % deskColors.length)} className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-6 py-2 font-mono text-xs font-medium text-on-primary backdrop-blur-md transition hover:bg-white/20">
-                <Palette size={16} /> Đổi màu bàn
+              <button onClick={() => setDeskColorIndex((value) => (value + 1) % deskColors.length)} className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 font-mono text-[10px] font-medium text-on-primary backdrop-blur-md transition hover:bg-white/20 sm:gap-2 sm:px-6 sm:py-2 sm:text-xs">
+                <Palette size={14} className="sm:h-4 sm:w-4" /> Đổi màu bàn
               </button>
             </div>
           </div>

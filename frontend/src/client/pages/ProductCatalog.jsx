@@ -6,6 +6,7 @@ import { CLIENT_ROUTES } from '../routes.js'
 import { formatCurrency } from '../utils/formatters.js'
 import { productsApi } from '../api/products.js'
 import { resolveAssetUrl } from '../api/http.js'
+import SEO from '../../components/SEO.jsx'
 
 const categories = [
   { id: 'ban-thong-minh', label: 'Bàn thông minh' },
@@ -391,6 +392,10 @@ export default function ProductCatalog() {
 
   return (
     <ClientLayout>
+      <SEO 
+        title="Tất cả sản phẩm" 
+        description="Khám phá hệ sinh thái nội thất thông minh được thiết kế với độ chính xác cơ khí, hỗ trợ sức khỏe và tối ưu hóa quy trình làm việc chuyên nghiệp."
+      />
       <main className="mx-auto max-w-[1280px] px-4 pb-section-gap-mobile pt-28 sm:px-6 lg:pb-section-gap lg:pt-32">
         <header className="mb-12 lg:mb-16">
           <nav className="mb-6 flex items-center gap-2">

@@ -9,10 +9,15 @@ import PoliciesSection from '../components/home/PoliciesSection.jsx'
 import ReviewsSection from '../components/home/ReviewsSection.jsx'
 import Workspace3DSection from '../components/home/Workspace3DSection.jsx'
 import ClientLayout from '../components/layout/ClientLayout.jsx'
+import SEO from '../../components/SEO.jsx'
 
 export default function Home() {
   return (
     <ClientLayout>
+      <SEO 
+        title="Trang Chủ" 
+        description="Smart Workspace - Giải pháp không gian làm việc thông minh, tiện lợi và đẳng cấp." 
+      />
       <main>
         <HeroSection />
         <CategorySection />

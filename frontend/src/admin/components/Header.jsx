@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Bell, ChevronDown, User, LogOut } from 'lucide-react'
+import { Search, Bell, ChevronDown, User, LogOut, Menu } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { ADMIN_ROUTES } from '../routes.js'
 
-export default function Header() {
+export default function Header({ onMenuClick }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -15,9 +15,16 @@ export default function Header() {
   }
 
   return (
-    <header className="h-16 bg-navy-900 flex items-center justify-between px-6 gap-4">
-      <div className="flex-1 max-w-md">
-        <div className="relative">
+    <header className="h-16 bg-navy-900 flex items-center justify-between px-4 sm:px-6 gap-4">
+      <div className="flex items-center gap-4 flex-1">
+        <button 
+          onClick={onMenuClick}
+          className="lg:hidden text-slate-200 hover:text-white transition-colors"
+        >
+          <Menu size={24} />
+        </button>
+        <div className="flex-1 max-w-md hidden sm:block">
+          <div className="relative">
           <Search
             size={16}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -28,10 +35,11 @@ export default function Header() {
             className="w-full bg-navy-800/70 text-slate-200 placeholder-slate-400 text-sm rounded-lg pl-9 pr-3 py-2 outline-none focus:ring-2 focus:ring-brand-teal"
           />
         </div>
+        </div>
       </div>
 
       <div className="flex items-center gap-5 text-slate-200">
-        <button className="hover:text-white transition-colors">
+        <button className="sm:hidden hover:text-white transition-colors">
           <Search size={18} />
         </button>
 

@@ -13,6 +13,7 @@ import {
   WalletCards,
 } from 'lucide-react'
 import ClientLayout from '../components/layout/ClientLayout.jsx'
+import SEO from '../../components/SEO.jsx'
 import { CLIENT_ROUTES } from '../routes.js'
 
 import { formatCurrency } from '../utils/formatters.js'
@@ -354,6 +355,7 @@ export default function Checkout() {
 
   return (
     <ClientLayout>
+      <SEO title="Thanh toán" />
       <main className="mx-auto max-w-[1280px] px-4 pb-section-gap-mobile pt-40 sm:px-6 lg:pb-section-gap lg:pt-44">
         <nav className="mb-10 flex flex-wrap items-center gap-2 font-mono text-xs font-medium text-on-surface-variant">
           <Link to={CLIENT_ROUTES.home} className="transition hover:text-primary">

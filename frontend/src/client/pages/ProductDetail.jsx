@@ -7,6 +7,7 @@ import { formatCurrency } from '../utils/formatters.js'
 import { productsApi } from '../api/products.js'
 import { reviewsApi } from '../api/reviews.js'
 import { resolveAssetUrl } from '../api/http.js'
+import SEO from '../../components/SEO.jsx'
 
 const gallery = [
   {
@@ -188,6 +189,11 @@ export default function ProductDetail() {
 
   return (
     <ClientLayout>
+      <SEO 
+        title={product.name} 
+        description={product.shortDescription || `Mua ${product.name} chính hãng tại Smart Workspace`} 
+        image={dynamicGallery[0]?.image}
+      />
       <main className="mx-auto max-w-[1280px] px-4 pb-section-gap-mobile pt-32 sm:px-6 lg:pb-section-gap lg:pt-36">
         <nav className="mb-8 flex items-center gap-2 font-mono text-xs font-medium text-on-surface-variant">
           <Link to={CLIENT_ROUTES.home} className="transition hover:text-primary">Trang chủ</Link>

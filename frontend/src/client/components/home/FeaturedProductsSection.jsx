@@ -10,7 +10,7 @@ const values = [
 export default function FeaturedProductsSection() {
   return (
     <section className="bg-surface px-4 py-section-gap-mobile sm:px-6 lg:py-section-gap">
-      <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-12 md:grid-cols-4">
+      <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-4">
         {values.map(([Icon, title, desc]) => (
           <div key={title} className="text-center">
             <Icon size={48} strokeWidth={1.5} className="mx-auto mb-4 text-secondary" />

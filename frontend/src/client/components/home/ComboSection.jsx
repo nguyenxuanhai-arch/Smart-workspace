@@ -7,7 +7,7 @@ export default function ComboSection() {
     <section id="combos" className="mx-auto max-w-[1280px] px-4 py-section-gap-mobile sm:px-6 lg:py-section-gap">
       <div>
         <SectionHeading title="Combo chuyên dụng" />
-        <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
+        <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-3">
           {comboCards.map((combo) => (
             <article key={combo.name} className="group rounded-2xl border border-border-subtle bg-surface-container-low p-8 transition hover:border-secondary">
               <div className="mb-6 aspect-video overflow-hidden rounded-xl">

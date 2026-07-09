@@ -88,6 +88,14 @@ export default function CategorySection() {
           })}
         </div>
       )}
+      
+      {!loading && products.length > 0 && (
+        <div className="mt-8 text-center sm:hidden">
+          <Link to={CLIENT_ROUTES.products} className="inline-flex items-center justify-center rounded-lg border border-primary px-8 py-3 font-mono text-sm font-medium text-primary transition hover:bg-primary hover:text-on-primary">
+            Xem tất cả sản phẩm
+          </Link>
+        </div>
+      )}
     </section>
   )
 }
