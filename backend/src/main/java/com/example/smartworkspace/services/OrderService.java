@@ -10,6 +10,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import com.example.smartworkspace.commons.AppException;
 import com.example.smartworkspace.commons.ErrorCode;
 import com.example.smartworkspace.commons.PageResponse;
+import com.example.smartworkspace.dtos.order.BuyNowOrderRequest;
 import com.example.smartworkspace.dtos.order.OrderRequest;
 import com.example.smartworkspace.dtos.order.OrderResponse;
 import com.example.smartworkspace.dtos.order.OrderStatusUpdateRequest;
@@ -33,6 +34,7 @@ import com.example.smartworkspace.repositories.CartRepository;
 import com.example.smartworkspace.repositories.OrderItemRepository;
 import com.example.smartworkspace.repositories.OrderRepository;
 import com.example.smartworkspace.repositories.PaymentRepository;
+import com.example.smartworkspace.repositories.ProductRepository;
 import com.example.smartworkspace.repositories.ShipmentRepository;
 import com.example.smartworkspace.repositories.UserRepository;
 import com.example.smartworkspace.securities.CustomUserDetails;
@@ -62,6 +64,7 @@ public class OrderService {
     private final CartItemRepository cartItemRepository;
     private final PaymentRepository paymentRepository;
     private final ShipmentRepository shipmentRepository;
+    private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final com.example.smartworkspace.repositories.VoucherRepository voucherRepository;
     private final OrderMapper orderMapper;
@@ -69,8 +72,7 @@ public class OrderService {
     @Transactional
     public OrderResponse createOrderFromCart(OrderRequest request) {
         Long userId = getCurrentUserId();
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        User user = getUser(userId);
         Cart cart = cartRepository.findByUserIdAndStatus(userId, CartStatus.ACTIVE)
                 .orElseThrow(() -> new AppException(ErrorCode.INVALID_REQUEST, "Cart is empty"));
         List<CartItem> cartItems = cartItemRepository.findByCartIdOrderByCreatedAtAsc(cart.getId());
@@ -78,7 +80,37 @@ public class OrderService {
             throw new AppException(ErrorCode.INVALID_REQUEST, "Cart is empty");
         }
 
-        BigDecimal subtotalAmount = calculateSubtotal(cartItems);
+        List<OrderLine> orderLines = cartItems.stream()
+                .map(cartItem -> new OrderLine(
+                        cartItem.getProduct(),
+                        getUnitPrice(cartItem),
+                        cartItem.getQuantity()
+                ))
+                .toList();
+        OrderResponse response = createOrder(userId, user, request, orderLines);
+
+        cartItemRepository.deleteAll(cartItems);
+        cart.setStatus(CartStatus.ORDERED);
+        cartRepository.save(cart);
+
+        return response;
+    }
+
+    @Transactional
+    public OrderResponse createBuyNowOrder(BuyNowOrderRequest request) {
+        Long userId = getCurrentUserId();
+        User user = getUser(userId);
+        Product product = productRepository.findById(request.getProductId())
+                .filter(item -> item.getStatus() == ProductStatus.ACTIVE)
+                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
+
+        return createOrder(userId, user, request, List.of(
+                new OrderLine(product, product.getPrice(), request.getQuantity())
+        ));
+    }
+
+    private OrderResponse createOrder(Long userId, User user, OrderRequest request, List<OrderLine> orderLines) {
+        BigDecimal subtotalAmount = calculateSubtotal(orderLines);
         BigDecimal discountAmount = BigDecimal.ZERO;
         String voucherCodeToSave = null;
         com.example.smartworkspace.enums.DiscountType voucherTypeToSave = null;
@@ -149,13 +181,9 @@ public class OrderService {
         order.setNote(trim(request.getNote()));
         Order savedOrder = orderRepository.save(order);
 
-        List<OrderItem> savedItems = orderItemRepository.saveAll(createOrderItems(savedOrder, cartItems));
+        List<OrderItem> savedItems = orderItemRepository.saveAll(createOrderItems(savedOrder, orderLines));
         Payment savedPayment = paymentRepository.save(createPayment(savedOrder, request.getPaymentMethod()));
         Shipment savedShipment = shipmentRepository.save(createShipment(savedOrder));
-
-        cartItemRepository.deleteAll(cartItems);
-        cart.setStatus(CartStatus.ORDERED);
-        cartRepository.save(cart);
 
         return orderMapper.toResponse(savedOrder, savedItems, savedPayment, savedShipment);
     }
@@ -215,22 +243,22 @@ public class OrderService {
         return toResponse(orderRepository.save(order));
     }
 
-    private BigDecimal calculateSubtotal(List<CartItem> cartItems) {
+    private BigDecimal calculateSubtotal(List<OrderLine> orderLines) {
         BigDecimal subtotalAmount = BigDecimal.ZERO;
-        for (CartItem cartItem : cartItems) {
-            ensureProductCanBeOrdered(cartItem);
-            BigDecimal itemSubtotal = getUnitPrice(cartItem).multiply(BigDecimal.valueOf(cartItem.getQuantity()));
+        for (OrderLine orderLine : orderLines) {
+            ensureProductCanBeOrdered(orderLine.product(), orderLine.quantity());
+            BigDecimal itemSubtotal = orderLine.unitPrice().multiply(BigDecimal.valueOf(orderLine.quantity()));
             subtotalAmount = subtotalAmount.add(itemSubtotal);
         }
         return subtotalAmount;
     }
 
-    private List<OrderItem> createOrderItems(Order order, List<CartItem> cartItems) {
+    private List<OrderItem> createOrderItems(Order order, List<OrderLine> orderLines) {
         List<OrderItem> orderItems = new ArrayList<>();
-        for (CartItem cartItem : cartItems) {
-            Product product = cartItem.getProduct();
-            BigDecimal unitPrice = getUnitPrice(cartItem);
-            int quantity = cartItem.getQuantity();
+        for (OrderLine orderLine : orderLines) {
+            Product product = orderLine.product();
+            BigDecimal unitPrice = orderLine.unitPrice();
+            int quantity = orderLine.quantity();
 
             OrderItem orderItem = new OrderItem();
             orderItem.setOrder(order);
@@ -275,11 +303,10 @@ public class OrderService {
         );
     }
 
-    private void ensureProductCanBeOrdered(CartItem cartItem) {
-        Product product = cartItem.getProduct();
+    private void ensureProductCanBeOrdered(Product product, int quantity) {
         if (product.getStatus() != ProductStatus.ACTIVE
                 || product.getStockQuantity() == null
-                || product.getStockQuantity() < cartItem.getQuantity()) {
+                || product.getStockQuantity() < quantity) {
             throw new AppException(ErrorCode.OUT_OF_STOCK);
         }
     }
@@ -323,6 +350,11 @@ public class OrderService {
         return userDetails.getUser().getId();
     }
 
+    private User getUser(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+    }
+
     private int safePage(int page) {
         return Math.max(page, 0);
     }
@@ -336,5 +368,8 @@ public class OrderService {
 
     private String trim(String value) {
         return value == null ? null : value.trim();
+    }
+
+    private record OrderLine(Product product, BigDecimal unitPrice, int quantity) {
     }
 }

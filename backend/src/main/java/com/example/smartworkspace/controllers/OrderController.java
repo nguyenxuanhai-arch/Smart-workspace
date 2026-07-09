@@ -3,6 +3,7 @@ package com.example.smartworkspace.controllers;
 import java.util.List;
 
 import com.example.smartworkspace.commons.ApiResponse;
+import com.example.smartworkspace.dtos.order.BuyNowOrderRequest;
 import com.example.smartworkspace.dtos.order.OrderRequest;
 import com.example.smartworkspace.dtos.order.OrderResponse;
 import com.example.smartworkspace.services.OrderService;
@@ -24,6 +25,11 @@ public class OrderController {
     @PostMapping
     public ApiResponse<OrderResponse> createOrder(@Valid @RequestBody OrderRequest request) {
         return ApiResponse.success("Create order successfully", orderService.createOrderFromCart(request));
+    }
+
+    @PostMapping("/buy-now")
+    public ApiResponse<OrderResponse> createBuyNowOrder(@Valid @RequestBody BuyNowOrderRequest request) {
+        return ApiResponse.success("Create buy-now order successfully", orderService.createBuyNowOrder(request));
     }
 
     @GetMapping("/my")

@@ -1,5 +1,6 @@
 package com.example.smartworkspace;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -13,6 +14,7 @@ import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
 
+import jakarta.persistence.EntityManager;
 import com.example.smartworkspace.entities.Category;
 import com.example.smartworkspace.entities.Product;
 import com.example.smartworkspace.entities.ProductImage;
@@ -70,6 +72,9 @@ class ShoppingFlowIntegrationTest {
 
     @Autowired
     private JwtService jwtService;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @Test
     void customerShoppingFlowAndAdminOperationsMatchDemoChecklist() throws Exception {
@@ -305,6 +310,102 @@ class ShoppingFlowIntegrationTest {
                         .content(json(Map.of("status", "PROCESSING"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("PROCESSING"));
+    }
+
+    @Test
+    void buyNowOrderCreatesSingleProductOrderAndKeepsCurrentCart() throws Exception {
+        String customerToken = createToken(RoleName.CUSTOMER);
+        Product cartProduct = createProduct("buy-now-cart", BigDecimal.valueOf(400_000), 10);
+        Product buyNowProduct = createProduct("buy-now-direct", BigDecimal.valueOf(1_500_000), 5);
+
+        mockMvc.perform(post("/api/cart/items")
+                        .header("Authorization", "Bearer " + customerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("productId", cartProduct.getId(), "quantity", 2))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items", hasSize(1)))
+                .andExpect(jsonPath("$.data.totalItems").value(2));
+
+        mockMvc.perform(post("/api/orders/buy-now")
+                        .header("Authorization", "Bearer " + customerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of(
+                                "productId", buyNowProduct.getId(),
+                                "quantity", 2,
+                                "receiverName", "Buy Now Customer",
+                                "receiverPhone", "0909000999",
+                                "shippingAddress", "456 Le Loi, Quan 3, TP.HCM",
+                                "paymentMethod", "COD",
+                                "shippingMethod", "STANDARD",
+                                "note", "Buy now order"
+                        ))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Create buy-now order successfully"))
+                .andExpect(jsonPath("$.data.orderCode").isNotEmpty())
+                .andExpect(jsonPath("$.data.items", hasSize(1)))
+                .andExpect(jsonPath("$.data.items[0].productId").value(buyNowProduct.getId()))
+                .andExpect(jsonPath("$.data.items[0].quantity").value(2))
+                .andExpect(jsonPath("$.data.subtotalAmount").value(3_000_000.0))
+                .andExpect(jsonPath("$.data.shippingFee").value(0.0))
+                .andExpect(jsonPath("$.data.totalAmount").value(3_000_000.0))
+                .andExpect(jsonPath("$.data.payment.paymentMethod").value("COD"))
+                .andExpect(jsonPath("$.data.payment.paymentStatus").value("UNPAID"))
+                .andExpect(jsonPath("$.data.shipment.shippingStatus").value("PENDING"));
+
+        mockMvc.perform(get("/api/cart")
+                        .header("Authorization", "Bearer " + customerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items", hasSize(1)))
+                .andExpect(jsonPath("$.data.items[0].productId").value(cartProduct.getId()))
+                .andExpect(jsonPath("$.data.items[0].quantity").value(2))
+                .andExpect(jsonPath("$.data.totalItems").value(2));
+
+        entityManager.flush();
+        entityManager.refresh(buyNowProduct);
+        assertEquals(3, buyNowProduct.getStockQuantity());
+    }
+
+    @Test
+    void buyNowOrderRejectsInvalidQuantity() throws Exception {
+        String customerToken = createToken(RoleName.CUSTOMER);
+        Product product = createProduct("buy-now-invalid-quantity", BigDecimal.valueOf(500_000), 5);
+
+        mockMvc.perform(post("/api/orders/buy-now")
+                        .header("Authorization", "Bearer " + customerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of(
+                                "productId", product.getId(),
+                                "quantity", 0,
+                                "receiverName", "Invalid Quantity",
+                                "receiverPhone", "0909000888",
+                                "shippingAddress", "789 Vo Van Tan, TP.HCM",
+                                "paymentMethod", "COD",
+                                "shippingMethod", "STANDARD"
+                        ))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false));
+    }
+
+    @Test
+    void buyNowOrderRejectsOutOfStockProduct() throws Exception {
+        String customerToken = createToken(RoleName.CUSTOMER);
+        Product product = createProduct("buy-now-out-of-stock", BigDecimal.valueOf(500_000), 1);
+
+        mockMvc.perform(post("/api/orders/buy-now")
+                        .header("Authorization", "Bearer " + customerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of(
+                                "productId", product.getId(),
+                                "quantity", 2,
+                                "receiverName", "Out Of Stock",
+                                "receiverPhone", "0909000777",
+                                "shippingAddress", "123 Nguyen Hue, TP.HCM",
+                                "paymentMethod", "COD",
+                                "shippingMethod", "STANDARD"
+                        ))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Product is out of stock"));
     }
 
     private Product createProduct(String slugPrefix, BigDecimal price, int stockQuantity) {

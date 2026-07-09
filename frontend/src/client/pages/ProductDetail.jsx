@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { ChevronRight, MessageCircle, Minus, Plus, ShieldCheck, ShoppingCart, Star, Truck, Loader2 } from 'lucide-react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { ChevronRight, CreditCard, MessageCircle, Minus, Plus, ShieldCheck, ShoppingCart, Star, Truck, Loader2 } from 'lucide-react'
 import ClientLayout from '../components/layout/ClientLayout.jsx'
 import { CLIENT_ROUTES } from '../routes.js'
 import { formatCurrency } from '../utils/formatters.js'
 import { productsApi } from '../api/products.js'
 import { reviewsApi } from '../api/reviews.js'
 import { resolveAssetUrl } from '../api/http.js'
+import { saveBuyNowDraft } from '../utils/buyNowCheckout.js'
 import SEO from '../../components/SEO.jsx'
 
 const gallery = [
@@ -79,6 +80,7 @@ import { useCart } from '../context/CartContext.jsx'
 
 export default function ProductDetail() {
   const { slug } = useParams()
+  const navigate = useNavigate()
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
   const [reviews, setReviews] = useState([])
@@ -164,6 +166,24 @@ export default function ProductDetail() {
       ],
     })
     setAdded(true)
+  }
+
+  const handleBuyNow = () => {
+    if (!product) return
+    saveBuyNowDraft({
+      id: `${product.slug}-${size}-${topColor.name}-${frameColor.name}`,
+      productId: product.id,
+      name: product.name,
+      price: displayPrice,
+      quantity,
+      image: dynamicGallery[0]?.image || '',
+      options: [
+        ['Mặt bàn', topColor.name],
+        ['Khung', frameColor.name],
+        ['Kích thước', size],
+      ],
+    })
+    navigate(`${CLIENT_ROUTES.checkout}?mode=buy-now`)
   }
 
   if (loading) {
@@ -337,8 +357,15 @@ export default function ProductDetail() {
                     added ? 'bg-secondary' : 'bg-primary'
                   }`}
                 >
-                  <ShoppingCart size={18} strokeWidth={1.5} />
-                  {added ? 'Đã thêm vào giỏ' : 'Thêm vào giỏ hàng'}
+                  <ShoppingCart size={25} strokeWidth={1.5} />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleBuyNow}
+                  className="flex h-14 flex-1 items-center justify-center gap-2 rounded border border-secondary bg-surface font-mono text-sm font-medium text-secondary transition hover:bg-surface-container-low"
+                >
+                  <CreditCard size={18} strokeWidth={1.5} />
+                  Mua ngay
                 </button>
               </div>
               <button type="button" className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded border border-secondary font-mono text-sm font-medium text-secondary transition hover:bg-surface-container-low">

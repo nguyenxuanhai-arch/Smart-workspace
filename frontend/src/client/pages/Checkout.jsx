@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   Building2,
   CheckCircle2,
@@ -17,6 +17,8 @@ import SEO from '../../components/SEO.jsx'
 import { CLIENT_ROUTES } from '../routes.js'
 
 import { formatCurrency } from '../utils/formatters.js'
+import { clearBuyNowDraft, getBuyNowDraft } from '../utils/buyNowCheckout.js'
+import { useClientAuth } from '../context/AuthContext.jsx'
 
 const checkoutItems = [
   {
@@ -168,10 +170,15 @@ import { Loader2, X } from 'lucide-react'
 import SearchableSelectField from '../components/SearchableSelectField.jsx'
 
 export default function Checkout() {
+  const [searchParams] = useSearchParams()
+  const mode = searchParams.get('mode')?.trim().toLowerCase()
+  const isBuyNowMode = mode === 'buy-now' || mode === 'buy now'
+  const [buyNowDraft, setBuyNowDraft] = useState(() => (isBuyNowMode ? getBuyNowDraft() : null))
   const [shippingId, setShippingId] = useState('STANDARD')
   const [paymentId, setPaymentId] = useState('cod')
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [placedOrderCode, setPlacedOrderCode] = useState('')
   
   const [voucherCodeInput, setVoucherCodeInput] = useState('')
   const [appliedVoucher, setAppliedVoucher] = useState(null)
@@ -179,13 +186,20 @@ export default function Checkout() {
   const [applyingVoucher, setApplyingVoucher] = useState(false)
   
   const { items, subtotal, clear } = useCart()
+  const { user } = useClientAuth()
+  const displayItems = isBuyNowMode && buyNowDraft ? [buyNowDraft] : items
+  const checkoutSubtotal = isBuyNowMode && buyNowDraft ? buyNowDraft.price * buyNowDraft.quantity : subtotal
+
+  useEffect(() => {
+    setBuyNowDraft(isBuyNowMode ? getBuyNowDraft() : null)
+  }, [isBuyNowMode])
 
   const handleApplyVoucher = async () => {
     if (!voucherCodeInput.trim()) return
     try {
       setVoucherError('')
       setApplyingVoucher(true)
-      const res = await vouchersApi.check(voucherCodeInput, subtotal)
+      const res = await vouchersApi.check(voucherCodeInput, checkoutSubtotal)
       setAppliedVoucher(res.data)
     } catch (err) {
       setVoucherError(err.response?.data?.message || 'Mã giảm giá không hợp lệ')
@@ -205,7 +219,7 @@ export default function Checkout() {
     if (appliedVoucher?.code) {
       const revalidate = async () => {
         try {
-          const res = await vouchersApi.check(appliedVoucher.code, subtotal)
+          const res = await vouchersApi.check(appliedVoucher.code, checkoutSubtotal)
           setAppliedVoucher(res.data)
           setVoucherError('')
         } catch (err) {
@@ -218,11 +232,11 @@ export default function Checkout() {
       const timer = setTimeout(revalidate, 500)
       return () => clearTimeout(timer)
     }
-  }, [items, subtotal])
+  }, [checkoutSubtotal, appliedVoucher?.code])
 
   const discountAmount = appliedVoucher?.discountAmount || 0
 
-  const amountAfterDiscount = subtotal - discountAmount
+  const amountAfterDiscount = checkoutSubtotal - discountAmount
 
   const shippingOptions = useMemo(() => [
     {
@@ -299,6 +313,11 @@ export default function Checkout() {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+    if (isBuyNowMode && !buyNowDraft) {
+      alert('Không tìm thấy sản phẩm mua ngay. Vui lòng chọn lại sản phẩm.')
+      return
+    }
+
     const formData = new FormData(event.target)
     
     // Address combination
@@ -319,8 +338,19 @@ export default function Checkout() {
 
     try {
       setSubmitting(true)
-      const order = await ordersApi.create(payload)
-      clear() // clear cart
+      const order = isBuyNowMode
+        ? await ordersApi.createBuyNow({
+            ...payload,
+            productId: buyNowDraft.productId,
+            quantity: buyNowDraft.quantity,
+          })
+        : await ordersApi.create(payload)
+      if (isBuyNowMode) {
+        clearBuyNowDraft()
+      } else {
+        clear()
+      }
+      setPlacedOrderCode(order.orderCode || '')
       setSubmitted(true)
       
       if (paymentId === 'payos') {
@@ -390,7 +420,9 @@ export default function Checkout() {
         {submitted && (
           <div role="status" className="mb-8 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-800">
             <CheckCircle2 size={22} strokeWidth={1.5} className="mt-0.5 shrink-0" />
-            <p className="text-sm leading-6">Đơn hàng đã được ghi nhận ở giao diện mẫu. Đội ngũ Smart Workspace sẽ liên hệ xác nhận trong thời gian sớm nhất.</p>
+            <p className="text-sm leading-6">
+              Đơn hàng{placedOrderCode ? ` ${placedOrderCode}` : ''} đã được ghi nhận. Đội ngũ Smart Workspace sẽ liên hệ xác nhận trong thời gian sớm nhất.
+            </p>
           </div>
         )}
 
@@ -401,9 +433,9 @@ export default function Checkout() {
           <div className="space-y-8">
             <CheckoutSection title="Thông tin liên hệ" subtitle="Dùng để gửi xác nhận đơn hàng và lịch giao." icon={ShieldCheck}>
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                <Field name="name" label="Họ và tên" placeholder="Nguyễn Minh Anh" defaultValue={defaultAddress.receiverName} />
-                <Field name="phone" label="Số điện thoại" placeholder="0901 234 567" type="tel" defaultValue={defaultAddress.receiverPhone} />
-                <Field name="email" label="Email" placeholder="minhanh@email.com" type="email" className="md:col-span-2" required={false} />
+                <Field name="name" label="Họ và tên" placeholder="Nguyễn Minh Anh" defaultValue={defaultAddress.receiverName || user?.fullName || ''} />
+                <Field name="phone" label="Số điện thoại" placeholder="0901 234 567" type="tel" defaultValue={defaultAddress.receiverPhone || user?.phone || ''} />
+                <Field name="email" label="Email" placeholder="minhanh@email.com" type="email" className="md:col-span-2" required={false} defaultValue={user?.email || ''} />
               </div>
             </CheckoutSection>
 
@@ -448,17 +480,19 @@ export default function Checkout() {
             <section className="rounded-xl border border-border-subtle bg-surface-elevated p-6 shadow-[0_24px_48px_-12px_rgba(15,23,42,0.08)] sm:p-8">
               <div className="mb-6 flex items-center justify-between gap-4">
                 <h2 className="text-2xl font-bold text-primary">Đơn hàng</h2>
-                <Link to={CLIENT_ROUTES.cart} className="font-mono text-xs font-semibold text-secondary underline">
-                  Sửa giỏ hàng
+                <Link to={isBuyNowMode ? CLIENT_ROUTES.products : CLIENT_ROUTES.cart} className="font-mono text-xs font-semibold text-secondary underline">
+                  {isBuyNowMode ? 'Chọn sản phẩm khác' : 'Sửa giỏ hàng'}
                 </Link>
               </div>
 
               <div className="mb-6">
-                {items.length > 0 ? (
-                  items.map((item) => <OrderItem key={item.id} item={item} />)
+                {displayItems.length > 0 ? (
+                  displayItems.map((item) => <OrderItem key={item.id} item={item} />)
                 ) : (
                   <p className="rounded-lg border border-border-subtle bg-surface p-4 text-sm text-on-surface-variant">
-                    Giỏ hàng đang trống. Vui lòng chọn sản phẩm trước khi thanh toán.
+                    {isBuyNowMode
+                      ? 'Không tìm thấy sản phẩm mua ngay. Vui lòng chọn lại sản phẩm.'
+                      : 'Giỏ hàng đang trống. Vui lòng chọn sản phẩm trước khi thanh toán.'}
                   </p>
                 )}
               </div>
@@ -493,7 +527,7 @@ export default function Checkout() {
               </div>
 
               <div className="space-y-4 border-t border-border-subtle pt-6">
-                <SummaryLine label="Tạm tính" value={formatCurrency(subtotal)} />
+                <SummaryLine label="Tạm tính" value={formatCurrency(checkoutSubtotal)} />
                 {discountAmount > 0 && <SummaryLine label="Giảm giá" value={`-${formatCurrency(discountAmount)}`} />}
                 <SummaryLine label="Phí vận chuyển" value={selectedShipping.price === 0 ? 'Miễn phí' : formatCurrency(selectedShipping.price)} />
                 <SummaryLine label="Thuế VAT" value="Đã bao gồm" />
@@ -504,7 +538,7 @@ export default function Checkout() {
 
               <button
                 type="submit"
-                disabled={items.length === 0 || submitting}
+                disabled={displayItems.length === 0 || submitting}
                 className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-4 font-mono text-sm font-bold uppercase text-on-primary transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {submitting && <Loader2 size={18} className="animate-spin" />}
