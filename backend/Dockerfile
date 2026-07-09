@@ -15,6 +15,7 @@ WORKDIR /app
 RUN addgroup -S smartworkspace \
     && adduser -S smartworkspace -G smartworkspace \
     && mkdir -p /app/uploads/products \
+    && mkdir -p /app/logs \
     && chown -R smartworkspace:smartworkspace /app
 
 COPY --from=build /workspace/target/*.jar /app/app.jar

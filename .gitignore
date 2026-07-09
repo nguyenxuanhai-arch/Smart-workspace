@@ -16,8 +16,9 @@ frontend/dist/
 # Backend generated files
 backend/target/
 backend/uploads/
-
 # Logs
 *.log
 ssl/key.pem
 ssl/cert.pem
+logs/
+backend/logs/

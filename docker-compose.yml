@@ -45,10 +45,12 @@ services:
       PAYOS_CHECKSUM_KEY: ${PAYOS_CHECKSUM_KEY:-}
       PAYOS_BASE_URL: ${PAYOS_BASE_URL:-https://api-merchant.payos.vn}
       JAVA_OPTS: ${JAVA_OPTS:-}
+      APP_LOG_DIR: /app/logs
     ports:
       - "${BACKEND_BIND_ADDRESS:-127.0.0.1}:${BACKEND_PORT:-8080}:8080"
     volumes:
       - smart_workspace_uploads:/app/uploads
+      - smart_workspace_logs:/app/logs
 
   frontend:
     build:
@@ -69,3 +71,4 @@ services:
 volumes:
   smart_workspace_mysql:
   smart_workspace_uploads:
+  smart_workspace_logs:
