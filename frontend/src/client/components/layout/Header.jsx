@@ -70,9 +70,8 @@ export default function Header() {
               key={label}
               to={to}
               onClick={handleHeaderLinkClick}
-              className={`font-mono text-sm font-medium transition-colors ${
-                isActive(to) ? 'text-primary' : 'text-on-surface-variant hover:text-primary'
-              }`}
+              className={`font-mono text-sm font-medium transition-colors ${isActive(to) ? 'text-primary' : 'text-on-surface-variant hover:text-primary'
+                }`}
             >
               {label}
             </Link>
@@ -99,9 +98,8 @@ export default function Header() {
                 type="button"
                 aria-label="Mở menu tài khoản"
                 aria-expanded={accountOpen}
-                className={`flex h-10 w-10 items-center justify-center rounded-full border transition ${
-                  accountOpen ? 'border-secondary bg-surface text-secondary' : 'border-border-subtle text-primary hover:bg-surface'
-                }`}
+                className={`flex h-10 w-10 items-center justify-center rounded-full border transition ${accountOpen ? 'border-secondary bg-surface text-secondary' : 'border-border-subtle text-primary hover:bg-surface'
+                  }`}
                 onClick={() => setAccountOpen((value) => !value)}
               >
                 <User size={20} strokeWidth={1.5} />
@@ -148,10 +146,7 @@ export default function Header() {
               className="inline-flex items-center gap-2 rounded-lg border border-border-subtle px-3 py-2 text-primary transition hover:bg-surface"
             >
               <User size={18} strokeWidth={1.5} />
-              <span className="flex flex-col font-mono">
-                <span className="text-[10px] font-semibold uppercase text-on-surface-variant">Chưa đăng nhập</span>
-                <span className="text-xs font-semibold">Đăng nhập</span>
-              </span>
+              <span className="text-sm font-medium">Đăng nhập</span>
             </Link>
           )}
         </div>
