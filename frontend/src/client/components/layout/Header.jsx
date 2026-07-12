@@ -7,7 +7,7 @@ import { accountNavItems } from '../../data/accountNav.js'
 import { useCart } from '../../context/CartContext.jsx'
 
 const headerNav = [
-  ['Bàn thông minh', `${CLIENT_ROUTES.products}?category=ban-thong-minh`],
+  ['Combo Setup', `${CLIENT_ROUTES.products}?category=combo-workspace`],
   ['Ghế công thái học', `${CLIENT_ROUTES.products}?category=ghe-cong-thai-hoc`],
   ['Phụ kiện', `${CLIENT_ROUTES.products}?category=phu-kien`],
   ['Giải pháp', CLIENT_ROUTES.workspace3d],
