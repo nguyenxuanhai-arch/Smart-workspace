@@ -1,4 +1,5 @@
 import { Box, RotateCcw, ShieldCheck, Truck, WalletCards } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { heroImage, trustBadges } from '../../data/home.js'
 
 const trustIcons = [RotateCcw, ShieldCheck, Truck, WalletCards]
@@ -18,9 +19,9 @@ export default function HeroSection() {
             <a href="#products" className="inline-flex items-center justify-center rounded-lg bg-primary px-8 py-4 font-mono text-sm font-medium text-on-primary transition hover:bg-primary/90">
               Khám phá sản phẩm
             </a>
-            <a href="#workspace-3d" className="inline-flex items-center justify-center gap-2 rounded-lg border border-secondary px-8 py-4 font-mono text-sm font-medium text-secondary transition hover:bg-secondary/5">
+            <Link to="/workspace-3d" className="inline-flex items-center justify-center gap-2 rounded-lg border border-secondary px-8 py-4 font-mono text-sm font-medium text-secondary transition hover:bg-secondary/5">
               Thử Workspace 3D <Box size={18} />
-            </a>
+            </Link>
           </div>
         </div>
 

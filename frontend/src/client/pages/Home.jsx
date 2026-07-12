@@ -7,7 +7,7 @@ import HeroSection from '../components/home/HeroSection.jsx'
 import NewsletterSection from '../components/home/NewsletterSection.jsx'
 import PoliciesSection from '../components/home/PoliciesSection.jsx'
 import ReviewsSection from '../components/home/ReviewsSection.jsx'
-import Workspace3DSection from '../components/home/Workspace3DSection.jsx'
+
 import ClientLayout from '../components/layout/ClientLayout.jsx'
 import SEO from '../../components/SEO.jsx'
 
@@ -21,7 +21,7 @@ export default function Home() {
       <main>
         <HeroSection />
         <CategorySection />
-        <Workspace3DSection />
+
         <ComboSection />
         <FeaturedProductsSection />
         <AiQuizSection />

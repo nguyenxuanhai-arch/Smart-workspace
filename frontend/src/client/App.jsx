@@ -3,6 +3,7 @@ import { CLIENT_ROUTES } from './routes.js'
 import ComboSection from './components/home/ComboSection.jsx'
 import ReviewsSection from './components/home/ReviewsSection.jsx'
 import Workspace3DSection from './components/home/Workspace3DSection.jsx'
+import Workspace3D from './pages/Workspace3D.jsx'
 import ClientLayout from './components/layout/ClientLayout.jsx'
 import ScrollToTop from './components/layout/ScrollToTop.jsx'
 import AccountPage from './pages/AccountPage.jsx'
@@ -80,9 +81,9 @@ export default function ClientApp() {
           <Route
             path={routePath(CLIENT_ROUTES.workspace3d)}
             element={
-              <SectionPage>
-                <Workspace3DSection />
-              </SectionPage>
+              <ClientLayout>
+                <Workspace3D />
+              </ClientLayout>
             }
           />
           <Route
