@@ -1,6 +1,7 @@
 package com.example.smartworkspace.controllers;
 
 import com.example.smartworkspace.commons.ApiResponse;
+import com.example.smartworkspace.configs.PaymentCallbackUrlResolver;
 import com.example.smartworkspace.dtos.payment.CreatePayOSCheckoutRequest;
 import com.example.smartworkspace.dtos.payment.CreatePayOSCheckoutResponse;
 import com.example.smartworkspace.dtos.payment.PaymentRequest;
@@ -8,6 +9,7 @@ import com.example.smartworkspace.dtos.payment.PaymentResponse;
 import com.example.smartworkspace.securities.CustomUserDetails;
 import com.example.smartworkspace.services.PayOSPaymentService;
 import com.example.smartworkspace.services.PaymentService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 public class PaymentController {
     private final PaymentService paymentService;
     private final PayOSPaymentService payOSPaymentService;
+    private final PaymentCallbackUrlResolver paymentCallbackUrlResolver;
 
     @PostMapping("/{orderId}")
     public ApiResponse<PaymentResponse> createPayment(
@@ -41,10 +44,16 @@ public class PaymentController {
     @PostMapping("/payos/checkout")
     public ApiResponse<CreatePayOSCheckoutResponse> createPayOSCheckout(
             @Valid @RequestBody CreatePayOSCheckoutRequest request,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            HttpServletRequest httpRequest
     ) {
+        String callbackOrigin = paymentCallbackUrlResolver.resolve(httpRequest);
         return ApiResponse.success("Create PayOS checkout successfully",
-            payOSPaymentService.createCheckout(request.getOrderId(), userDetails.getUser().getId()));
+            payOSPaymentService.createCheckout(
+                request.getOrderId(),
+                userDetails.getUser().getId(),
+                callbackOrigin
+            ));
     }
 
     @PostMapping("/payos/sync")

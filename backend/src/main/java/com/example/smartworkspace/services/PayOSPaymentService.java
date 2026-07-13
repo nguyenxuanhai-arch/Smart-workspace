@@ -1,8 +1,9 @@
 package com.example.smartworkspace.services;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.Objects;
 
-import com.example.smartworkspace.configs.AppUrlProperties;
 import com.example.smartworkspace.dtos.payment.CreatePayOSCheckoutResponse;
 import com.example.smartworkspace.entities.Order;
 import com.example.smartworkspace.entities.Payment;
@@ -18,6 +19,8 @@ import vn.payos.PayOS;
 import vn.payos.exception.PayOSException;
 import vn.payos.model.v2.paymentRequests.CreatePaymentLinkRequest;
 import vn.payos.model.v2.paymentRequests.CreatePaymentLinkResponse;
+import vn.payos.model.v2.paymentRequests.PaymentLink;
+import vn.payos.model.v2.paymentRequests.PaymentLinkStatus;
 
 @Service
 @RequiredArgsConstructor
@@ -26,10 +29,9 @@ public class PayOSPaymentService {
     private final PayOS payOS;
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
-    private final AppUrlProperties appUrlProperties;
 
     @Transactional
-    public CreatePayOSCheckoutResponse createCheckout(Long orderId, Long currentUserId) {
+    public CreatePayOSCheckoutResponse createCheckout(Long orderId, Long currentUserId, String callbackOrigin) {
         Order order = orderRepository.findById(orderId)
             .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
 
@@ -48,7 +50,8 @@ public class PayOSPaymentService {
             throw new IllegalStateException("Đơn hàng đã được thanh toán");
         }
 
-        if (payment.getPaymentLinkId() != null && payment.getCheckoutUrl() != null) {
+        LocalDateTime now = LocalDateTime.now();
+        if (canReuseCheckoutLink(payment, callbackOrigin, now)) {
             return new CreatePayOSCheckoutResponse(
                 order.getId(),
                 payment.getProviderOrderCode(),
@@ -60,6 +63,8 @@ public class PayOSPaymentService {
             );
         }
 
+        invalidateExistingCheckoutLink(payment, now);
+
         long providerOrderCode = (System.currentTimeMillis() / 1000 % 1000000) * 1000 + (order.getId() % 1000);
         long amount = order.getTotalAmount().longValueExact();
         long expiredAt = Instant.now().plusSeconds(15 * 60).getEpochSecond();
@@ -70,8 +75,8 @@ public class PayOSPaymentService {
             .description(buildPayOSDescription(providerOrderCode))
             .buyerName(order.getReceiverName())
             .buyerPhone(order.getReceiverPhone())
-            .returnUrl(appUrlProperties.getFrontendUrl() + "/payment/payos/return")
-            .cancelUrl(appUrlProperties.getFrontendUrl() + "/payment/payos/cancel")
+            .returnUrl(callbackOrigin + "/payment/payos/return")
+            .cancelUrl(callbackOrigin + "/payment/payos/cancel")
             .expiredAt(expiredAt)
             .build();
 
@@ -82,6 +87,7 @@ public class PayOSPaymentService {
             payment.setProviderOrderCode(providerOrderCode);
             payment.setPaymentLinkId(response.getPaymentLinkId());
             payment.setCheckoutUrl(response.getCheckoutUrl());
+            payment.setCallbackOrigin(callbackOrigin);
             payment.setExpiredAt(Instant.ofEpochSecond(expiredAt).atZone(java.time.ZoneId.systemDefault()).toLocalDateTime());
             paymentRepository.save(payment);
 
@@ -96,6 +102,46 @@ public class PayOSPaymentService {
             );
         } catch (Exception ex) {
             throw new RuntimeException("Không thể tạo link thanh toán payOS", ex);
+        }
+    }
+
+    private boolean canReuseCheckoutLink(Payment payment, String callbackOrigin, LocalDateTime now) {
+        return payment.getPaymentLinkId() != null
+            && payment.getCheckoutUrl() != null
+            && Objects.equals(payment.getCallbackOrigin(), callbackOrigin)
+            && payment.getExpiredAt() != null
+            && payment.getExpiredAt().isAfter(now);
+    }
+
+    private void invalidateExistingCheckoutLink(Payment payment, LocalDateTime now) {
+        if (payment.getProviderOrderCode() == null || payment.getPaymentLinkId() == null) {
+            return;
+        }
+
+        if (payment.getExpiredAt() != null && !payment.getExpiredAt().isAfter(now)) {
+            return;
+        }
+
+        try {
+            PaymentLink existingLink = payOS.paymentRequests().get(payment.getProviderOrderCode());
+            PaymentLinkStatus status = existingLink.getStatus();
+
+            if (PaymentLinkStatus.PAID.equals(status)) {
+                throw new IllegalStateException("Giao dịch PayOS đã được thanh toán");
+            }
+
+            if (PaymentLinkStatus.PENDING.equals(status)
+                    || PaymentLinkStatus.PROCESSING.equals(status)
+                    || PaymentLinkStatus.UNDERPAID.equals(status)) {
+                payOS.paymentRequests().cancel(
+                    payment.getProviderOrderCode(),
+                    "Replace checkout link with current callback origin"
+                );
+            }
+        } catch (IllegalStateException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new RuntimeException("Không thể làm mới link thanh toán PayOS", ex);
         }
     }
 

@@ -20,7 +20,7 @@ RANDOM_SUFFIX="$(openssl rand -hex 3)"
 DNS_LABEL="${DNS_LABEL:-smart-workspace-${RANDOM_SUFFIX}}"
 
 PUBLIC_HOST="${DNS_LABEL}.${LOCATION}.cloudapp.azure.com"
-PUBLIC_URL="http://${PUBLIC_HOST}"
+PUBLIC_URL="https://${PUBLIC_HOST}"
 
 RENDERED_CLOUD_INIT="$(mktemp)"
 trap 'rm -f "${RENDERED_CLOUD_INIT}"' EXIT
@@ -67,6 +67,15 @@ az vm open-port \
   --name "${VM_NAME}" \
   --port 80 \
   --priority 1001 \
+  --output none
+
+echo "Mo port HTTPS 443..."
+
+az vm open-port \
+  --resource-group "${RESOURCE_GROUP}" \
+  --name "${VM_NAME}" \
+  --port 443 \
+  --priority 1002 \
   --output none
 
 echo "Cho cloud-init cai Docker, build va chay ung dung..."

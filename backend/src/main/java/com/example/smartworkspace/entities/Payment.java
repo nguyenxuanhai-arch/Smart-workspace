@@ -64,6 +64,9 @@ public class Payment {
     @Column(name = "checkout_url", length = 1000)
     private String checkoutUrl;
 
+    @Column(name = "callback_origin", length = 500)
+    private String callbackOrigin;
+
     @Column(name = "provider_reference", unique = true, length = 100)
     private String providerReference;
 
