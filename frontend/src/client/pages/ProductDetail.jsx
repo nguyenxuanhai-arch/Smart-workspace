@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ChevronRight, CreditCard, MessageCircle, Minus, Plus, ShieldCheck, ShoppingCart, Star, Truck, Loader2 } from 'lucide-react'
+import { ChevronRight, CreditCard, MessageCircle, Minus, Plus, ShieldCheck, ShoppingCart, Star, Truck, Loader2, X } from 'lucide-react'
 import ClientLayout from '../components/layout/ClientLayout.jsx'
 import { CLIENT_ROUTES } from '../routes.js'
 import { formatCurrency } from '../utils/formatters.js'
@@ -92,6 +92,7 @@ export default function ProductDetail() {
   const [frameColor, setFrameColor] = useState(frameColors[1])
   const [quantity, setQuantity] = useState(1)
   const [added, setAdded] = useState(false)
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false)
   const { addItem } = useCart()
   
   const displayPrice = product?.price || 8500000
@@ -226,7 +227,12 @@ export default function ProductDetail() {
         <section className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-gutter">
           <div className="lg:col-span-7">
             <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg bg-surface-container-low p-4 shadow-[0_24px_48px_-12px_rgba(15,23,42,0.06)] sm:p-8">
-              <img src={dynamicGallery[activeImage]?.image} alt={dynamicGallery[activeImage]?.label} className="h-full w-full rounded object-cover" />
+              <img 
+                src={dynamicGallery[activeImage]?.image} 
+                alt={dynamicGallery[activeImage]?.label} 
+                className="h-full w-full cursor-pointer rounded object-cover" 
+                onClick={() => setIsImageModalOpen(true)}
+              />
             </div>
             <div className="mt-4 grid grid-cols-5 gap-3 sm:gap-4">
               {dynamicGallery.map((item, index) => (
@@ -440,6 +446,28 @@ export default function ProductDetail() {
           </aside>
         </section>
       </main>
+
+      {/* Image Modal */}
+      {isImageModalOpen && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setIsImageModalOpen(false)}
+        >
+          <button 
+            type="button"
+            className="absolute right-4 top-4 text-white hover:text-gray-300 sm:right-8 sm:top-8"
+            onClick={() => setIsImageModalOpen(false)}
+          >
+            <X size={32} />
+          </button>
+          <img 
+            src={dynamicGallery[activeImage]?.image} 
+            alt={dynamicGallery[activeImage]?.label}
+            className="max-h-[90vh] max-w-[90vw] cursor-default rounded object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </ClientLayout>
   )
 }
