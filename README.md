@@ -25,6 +25,11 @@
 
 Dự án được xây dựng phục vụ môn **Thương mại điện tử**, mô phỏng đầy đủ một hệ thống bán hàng online từ phía khách hàng đến phía quản trị viên.
 
+
+  <img width="949" height="535" alt="image" src="https://github.com/user-attachments/assets/636070e3-3e68-4374-b93f-06b7d950c9f3" />
+  <img width="933" height="530" alt="image" src="https://github.com/user-attachments/assets/515f9c7e-3df9-4c13-a78b-a526ff7a555d" />
+
+
 ---
 
 ## 🎯 Mục tiêu dự án
